@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0D1B2A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Contractor Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --navy:#0D1B2A;
+  --emerald:#00C48C;
+  --red:#FF6B6B;
+  --white:#fff;
+  --r:16px;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --dur:320ms;
+}
+
+html,body{
+  height:100%;overflow:hidden;
+  background:var(--navy);
+  font-family:'DM Sans',-apple-system,sans-serif;
+  color:var(--white);
+  -webkit-font-smoothing:antialiased;
+}
+
+#app{position:relative;width:100%;height:100%;overflow:hidden}
+
+/* ── Top chrome ── */
+#chrome-top{
+  position:fixed;inset:0 0 auto 0;z-index:200;
+  padding-top:env(safe-area-inset-top,0px);
+  background:var(--navy);
+}
+
+#prog-track{height:4px;background:rgba(255,255,255,.08)}
+#prog-fill{
+  height:100%;width:0%;
+  background:var(--emerald);
+  transition:width var(--dur) var(--ease);
+}
+
+#nav-row{
+  display:flex;align-items:center;justify-content:space-between;
+  height:56px;padding:0 20px;
+}
+
+#back-btn{
+  display:flex;align-items:center;gap:6px;
+  background:none;border:none;
+  color:rgba(255,255,255,.6);
+  font-family:inherit;font-size:15px;font-weight:500;
+  cursor:pointer;
+  min-height:48px;min-width:72px;padding:4px 0;
+  opacity:0;pointer-events:none;
+  transition:opacity 200ms;
+  -webkit-tap-highlight-color:transparent;
+}
+#back-btn.show{opacity:1;pointer-events:auto}
+#back-btn:active{color:var(--white)}
+
+#step-lbl{
+  font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.35);
+  opacity:0;transition:opacity 200ms;
+}
+#step-lbl.show{opacity:1}
+
+/* ── Screens ── */
+.screen{
+  position:absolute;inset:0;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-top:calc(env(safe-area-inset-top,0px) + 60px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 108px);
+  padding-left:24px;padding-right:24px;
+  transform:translateX(100%);
+  transition:transform var(--dur) var(--ease);
+  will-change:transform;
+}
+
+#screen-0{display:flex;flex-direction:column;justify-content:center}
+
+/* ── Type ── */
+.lbl{
+  font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--emerald);margin-bottom:14px;
+}
+.q-h{font-size:27px;font-weight:700;line-height:1.22;letter-spacing:-.3px;margin-bottom:8px}
+.q-s{font-size:15px;color:rgba(255,255,255,.5);line-height:1.55;margin-bottom:32px}
+
+/* ── Welcome ── */
+.badge{
+  width:68px;height:68px;border-radius:18px;
+  background:var(--emerald);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:28px;
+}
+.w-title{font-size:38px;font-weight:700;line-height:1.1;letter-spacing:-.6px;margin-bottom:14px}
+.w-sub{font-size:17px;color:rgba(255,255,255,.5);line-height:1.55;max-width:290px}
+
+/* ── Choice cards ── */
+.cards{display:flex;flex-direction:column;gap:12px}
+
+.card{
+  background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.09);
+  border-radius:var(--r);
+  padding:18px 20px;
+  display:flex;align-items:center;gap:12px;
+  cursor:pointer;min-height:72px;
+  transition:background 150ms,border-color 150ms,transform 150ms var(--ease);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.card:active{transform:scale(.98)}
+.card.selected{background:rgba(0,196,140,.10);border-color:var(--emerald)}
+
+.card-body{flex:1}
+.c-title{font-size:17px;font-weight:600}
+.c-desc{font-size:13px;color:rgba(255,255,255,.45);margin-top:2px}
+
+.c-icon{flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.ico-arr{color:rgba(255,255,255,.25)}
+.ico-chk{display:none;color:var(--emerald)}
+.card.selected .ico-arr{display:none}
+.card.selected .ico-chk{display:flex}
+
+/* ── Number input ── */
+.inp-row{
+  display:flex;align-items:baseline;
+  border-bottom:2px solid rgba(255,255,255,.14);
+  padding-bottom:10px;
+  transition:border-color 200ms;
+}
+.inp-row:focus-within{border-color:var(--emerald)}
+
+.inp-pfx{
+  font-family:'DM Serif Display',serif;
+  font-size:42px;color:rgba(255,255,255,.35);line-height:1;padding-right:4px;
+}
+.num{
+  flex:1;background:none;border:none;outline:none;
+  font-family:'DM Serif Display',serif;
+  font-size:52px;color:var(--white);
+  caret-color:var(--emerald);min-width:0;
+}
+.num::placeholder{color:rgba(255,255,255,.18)}
+.num::-webkit-outer-spin-button,.num::-webkit-inner-spin-button{-webkit-appearance:none}
+.num[type=number]{-moz-appearance:textfield}
+
+.inp-hint{margin-top:10px;font-size:13px;color:rgba(255,255,255,.3)}
+
+/* ── Compact numeric cards ── */
+.cards-num .card{min-height:64px;padding:14px 20px}
+.cards-num .c-title{font-size:20px;font-family:'DM Serif Display',serif}
+
+/* ── Employed elsewhere warning ── */
+.emp-warning{
+  display:none;margin-top:16px;
+  padding:16px;border-radius:12px;
+  background:rgba(255,107,107,.1);
+  border:1px solid rgba(255,107,107,.3);
+}
+.emp-warning p{font-size:14px;color:var(--red);line-height:1.55}
+
+/* ── Employer NI highlight ── */
+.ni-highlight{border:1.5px solid rgba(255,107,107,.4)!important}
+.ni-badge{
+  display:inline-block;margin-left:8px;
+  padding:2px 8px;border-radius:100px;
+  font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  background:rgba(255,107,107,.15);color:var(--red);
+  vertical-align:middle;
+}
+
+/* ── Disclaimer ── */
+.disclaimer{
+  margin-top:4px;padding:16px 20px;
+  font-size:12px;color:rgba(13,27,42,.4);line-height:1.6;
+  background:#f4f5f6;border-radius:var(--r);
+}
+
+/* ── Output ── */
+.hero{
+  background:linear-gradient(145deg,#132338 0%,#0f2040 100%);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:var(--r);padding:24px 22px;margin-bottom:14px;
+}
+.h-lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:8px}
+.h-val{font-family:'DM Serif Display',serif;font-size:58px;line-height:1;color:var(--emerald)}
+.h-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:6px}
+
+.out-cards{display:flex;flex-direction:column;gap:10px}
+.out-card{background:#fff;border-radius:var(--r);padding:18px 20px}
+.o-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(13,27,42,.45);margin-bottom:6px}
+.o-val{font-family:'DM Serif Display',serif;font-size:38px;line-height:1;color:#0D1B2A}
+.o-val.pos{color:#009E72}
+.o-val.neg{color:var(--red)}
+.o-sub{font-size:12px;color:rgba(13,27,42,.38);margin-top:5px}
+
+/* ── Footer ── */
+#chrome-bot{
+  position:fixed;inset:auto 0 0 0;z-index:200;
+  padding:12px 24px calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to top,var(--navy) 75%,transparent);
+}
+.btn{
+  display:block;width:100%;height:58px;
+  background:var(--emerald);border:none;border-radius:100px;
+  font-family:inherit;font-size:17px;font-weight:700;
+  color:#0D1B2A;cursor:pointer;letter-spacing:-.1px;
+  transition:transform 100ms,background 200ms,color 200ms;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{background:rgba(255,255,255,.1);color:rgba(255,255,255,.28);cursor:default}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOP CHROME -->
+<div id="chrome-top">
+  <div id="prog-track"><div id="prog-fill"></div></div>
+  <div id="nav-row">
+    <button id="back-btn" onclick="goBack()">
+      <svg width="9" height="15" viewBox="0 0 9 15" fill="none">
+        <path d="M8 1L1.5 7.5L8 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back
+    </button>
+    <span id="step-lbl"></span>
+  </div>
+</div>
+
+<!-- SCREEN 0 — Welcome -->
+<div class="screen" id="screen-0">
+  <div class="badge">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <path d="M16 4L4 10V16C4 23.18 9.82 28 16 28C22.18 28 28 23.18 28 16V10L16 4Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M10 16L14 20L22 12" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h1 class="w-title">Contractor<br>Calculator</h1>
+  <p class="w-sub">Know exactly what you take home — pension, IR35, expenses and all.</p>
+</div>
+
+<!-- SCREEN 1 — IR35 -->
+<div class="screen" id="screen-1">
+  <div class="lbl">IR35 Status</div>
+  <h2 class="q-h">Are you inside or outside IR35?</h2>
+  <p class="q-s">This determines how your income is taxed.</p>
+  <div class="cards">
+    <div class="card" data-group="ir35" data-value="outside" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Outside IR35</div>
+        <div class="c-desc">Operating through your own limited company</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ir35" data-value="inside" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Inside IR35</div>
+        <div class="c-desc">Paid via umbrella company or PAYE agency</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2 — Day Rate -->
+<div class="screen" id="screen-2">
+  <div class="lbl">Day Rate</div>
+  <h2 class="q-h">What is your day rate?</h2>
+  <p class="q-s">Your standard daily charge to clients.</p>
+  <div class="inp-row">
+    <span class="inp-pfx">£</span>
+    <input class="num" id="day-rate" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
+  </div>
+  <div class="inp-hint">Typical rates range from £300 to £1,200 per day</div>
+</div>
+
+<!-- SCREEN 3 — Days per week -->
+<div class="screen" id="screen-3">
+  <div class="lbl">Working Pattern</div>
+  <h2 class="q-h">How many days do you work per week?</h2>
+  <p class="q-s">Your typical contracted days per week.</p>
+  <div class="cards cards-num">
+
+    <div class="card" data-group="daysPerWeek" data-value="5" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">5 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="card" data-group="daysPerWeek" data-value="4" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">4 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="card" data-group="daysPerWeek" data-value="3" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">3 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="card" data-group="daysPerWeek" data-value="2" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">2 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="card" data-group="daysPerWeek" data-value="1" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">1 day</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCREEN 4 — Days holiday -->
+<div class="screen" id="screen-4">
+  <div class="lbl">Time Off</div>
+  <h2 class="q-h">How many days holiday do you take per year?</h2>
+  <p class="q-s">Include bank holidays if you don't work them.</p>
+  <div class="inp-row">
+    <input class="num" id="holiday-days" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
+  </div>
+  <div class="inp-hint">UK contractors typically take 20–30 days including bank holidays</div>
+</div>
+
+<!-- SCREEN 5 — Umbrella fee -->
+<div class="screen" id="screen-5">
+  <div class="lbl">Umbrella Company</div>
+  <h2 class="q-h">What is your umbrella company margin fee per week?</h2>
+  <p class="q-s">The weekly management fee charged by your umbrella company.</p>
+  <div class="inp-row">
+    <span class="inp-pfx">£</span>
+    <input class="num" id="umbrella-fee" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="20" autocomplete="off"
+      value="20" oninput="syncUI()">
+  </div>
+  <div class="inp-hint">Most umbrella companies charge £15–£30 per week</div>
+</div>
+
+<!-- SCREEN 6 — Pension -->
+<div class="screen" id="screen-6">
+  <div class="lbl">Pension</div>
+  <h2 class="q-h">Do you pay into a pension?</h2>
+  <p class="q-s">Contributions reduce your taxable income.</p>
+  <div class="cards">
+    <div class="card" data-group="pension" data-value="yes" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Yes</div>
+        <div class="c-desc">I make regular pension contributions</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="pension" data-value="no" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">No</div>
+        <div class="c-desc">I don't currently contribute to a pension</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 7 — Pension percentage -->
+<div class="screen" id="screen-7">
+  <div class="lbl">Pension</div>
+  <h2 class="q-h">What percentage of gross do you contribute?</h2>
+  <p class="q-s">Your contribution is taken from your employee gross pay.</p>
+  <div class="inp-row">
+    <input class="num" id="pension-pct" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
+    <span class="inp-pfx" style="padding-left:4px;padding-right:0">%</span>
+  </div>
+  <div class="inp-hint">Auto-enrolment minimum is 5% employee contribution</div>
+</div>
+
+<!-- SCREEN 8 — Employed elsewhere -->
+<div class="screen" id="screen-8">
+  <div class="lbl">Other Income</div>
+  <h2 class="q-h">Are you employed elsewhere?</h2>
+  <p class="q-s">This can affect your personal allowance and NI thresholds.</p>
+  <div class="cards">
+
+    <div class="card" data-group="employedElsewhere" data-value="no" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">No</div>
+        <div class="c-desc">This is my only source of income</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="card" data-group="employedElsewhere" data-value="yes" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Yes</div>
+        <div class="c-desc">I also have a PAYE job or other employment</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+  </div>
+  <div class="emp-warning" id="employed-warning">
+    <p>&#9888;&#xFE0F; Your personal allowance and NI thresholds may already be used by your employment. The figures shown may not reflect your actual tax liability — please speak to an accountant.</p>
+  </div>
+</div>
+
+<!-- SCREEN 9 — IR35 Output -->
+<div class="screen" id="screen-9">
+  <div class="lbl">Your IR35 Estimate</div>
+  <h2 class="q-h" style="margin-bottom:20px">Here's your breakdown</h2>
+
+  <div class="hero">
+    <div class="h-lbl">Net Annual Take-Home</div>
+    <div class="h-val" id="o-net-annual">£0</div>
+    <div class="h-sub" id="o-days-sub">after all deductions</div>
+  </div>
+
+  <div class="out-cards">
+
+    <div class="out-card">
+      <div class="o-lbl">Net Monthly</div>
+      <div class="o-val pos" id="o-net-monthly">£0</div>
+      <div class="o-sub">take-home per month</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Effective Tax Rate</div>
+      <div class="o-val" id="o-eff-rate" style="color:#0D1B2A">0%</div>
+      <div class="o-sub">of gross contract value</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Gross Contract Value</div>
+      <div class="o-val pos" id="o-gross">£0</div>
+      <div class="o-sub">annual contract income</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Umbrella Company Fee</div>
+      <div class="o-val neg" id="o-umbrella">-£0</div>
+      <div class="o-sub">weekly fee × 52</div>
+    </div>
+
+    <div class="out-card ni-highlight">
+      <div class="o-lbl">Employer NI <span class="ni-badge">Never reaches you</span></div>
+      <div class="o-val neg" id="o-employer-ni">-£0</div>
+      <div class="o-sub">15% above £5,000 — paid by umbrella before you see a penny</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Apprenticeship Levy</div>
+      <div class="o-val neg" id="o-levy">-£0</div>
+      <div class="o-sub">0.5% of gross</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Employee NI</div>
+      <div class="o-val neg" id="o-employee-ni">-£0</div>
+      <div class="o-sub">8% to £50,270 then 2%</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Income Tax</div>
+      <div class="o-val neg" id="o-income-tax">-£0</div>
+      <div class="o-sub">2026/27 rates, personal allowance applied</div>
+    </div>
+
+    <div class="out-card" id="o-pension-row">
+      <div class="o-lbl">Pension Contribution</div>
+      <div class="o-val neg" id="o-pension">-£0</div>
+      <div class="o-sub" id="o-pension-sub"></div>
+    </div>
+
+    <div class="disclaimer">
+      This calculator provides estimates only and does not constitute financial or tax advice.
+      Tax rules are complex and individual circumstances vary. Please consult a qualified accountant.
+    </div>
+
+  </div>
+</div>
+
+<!-- BOTTOM CHROME -->
+<div id="chrome-bot">
+  <button class="btn" id="main-btn" onclick="onContinue()">Get Started</button>
+</div>
+
+</div><!-- #app -->
+<script>
+(function(){
+'use strict';
+
+var cur = 0, busy = false;
+var history = [];
+var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null };
+
+var screens = [].slice.call(document.querySelectorAll('.screen'));
+var fill    = document.getElementById('prog-fill');
+var backBtn = document.getElementById('back-btn');
+var stepLbl = document.getElementById('step-lbl');
+var mainBtn = document.getElementById('main-btn');
+
+var SCREENS = {
+  0: { pct:0,   back:false, step:null,     btn:'Get Started', ok:function(){ return true; } },
+  1: { pct:12,  back:true,  step:'1 of 7', btn:'Continue',    ok:function(){ return ans.ir35 !== null; } },
+  2: { pct:24,  back:true,  step:'2 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('day-rate').value; return v!==''&&+v>0; } },
+  3: { pct:36,  back:true,  step:'3 of 7', btn:'Continue',    ok:function(){ return ans.daysPerWeek !== null; } },
+  4: { pct:48,  back:true,  step:'4 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('holiday-days').value; return v!==''&&+v>=0&&+v<365; } },
+  5: { pct:60,  back:true,  step:'5 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('umbrella-fee').value; return v!==''&&+v>=0; } },
+  6: { pct:72,  back:true,  step:'6 of 7', btn:'Continue',    ok:function(){ return ans.pension !== null; } },
+  7: { pct:80,  back:true,  step:'6 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('pension-pct').value; return v!==''&&+v>0&&+v<=100; } },
+  8: { pct:88,  back:true,  step:'7 of 7', btn:'Continue',    ok:function(){ return ans.employedElsewhere !== null; } },
+  9: { pct:100, back:true,  step:'Done',   btn:'Recalculate', ok:function(){ return true; } },
+};
+
+function getNextScreen(idx) {
+  if (idx === 0) return 1;
+  if (idx === 1) return 2;
+  if (idx === 2) return 3;
+  if (idx === 3) return 4;
+  if (idx === 4) return 5;
+  if (idx === 5) return 6;
+  if (idx === 6) return ans.pension === 'yes' ? 7 : 8;
+  if (idx === 7) return 8;
+  if (idx === 8) return 9;
+  return null;
+}
+
+screens.forEach(function(s,i){
+  s.style.transform = i===0 ? 'translateX(0)' : 'translateX(100%)';
+});
+syncUI();
+
+function goTo(idx, dir) {
+  if (busy || idx<0 || idx>=screens.length || idx===cur) return;
+  busy = true;
+  var from = screens[cur];
+  var to   = screens[idx];
+  to.style.transition = 'none';
+  to.style.transform  = dir>0 ? 'translateX(100%)' : 'translateX(-100%)';
+  void to.offsetWidth;
+  to.style.transition = '';
+  from.style.transform = dir>0 ? 'translateX(-100%)' : 'translateX(100%)';
+  to.style.transform   = 'translateX(0)';
+  cur = idx;
+  syncUI();
+  onEnter(idx);
+  setTimeout(function(){
+    from.style.transition = 'none';
+    from.style.transform  = 'translateX(100%)';
+    void from.offsetWidth;
+    from.style.transition = '';
+    busy = false;
+  }, 350);
+}
+
+function onEnter(idx) {
+  if (idx === 2) setTimeout(function(){ document.getElementById('day-rate').focus(); }, 340);
+  if (idx === 4) setTimeout(function(){ document.getElementById('holiday-days').focus(); }, 340);
+  if (idx === 5) setTimeout(function(){ document.getElementById('umbrella-fee').focus(); }, 340);
+  if (idx === 7) setTimeout(function(){ document.getElementById('pension-pct').focus(); }, 340);
+  if (idx === 9) {
+    renderOutput();
+    resetNums();
+    setTimeout(staggerIn, 100);
+    setTimeout(countUp, 200);
+  }
+}
+
+window.goBack = function(){
+  if (history.length === 0) return;
+  var prev = history.pop();
+  goTo(prev, -1);
+};
+
+window.onContinue = function(){
+  if (!SCREENS[cur].ok()) return;
+  if (cur === 9) {
+    resetAll();
+    goTo(0, -1);
+  } else {
+    var next = getNextScreen(cur);
+    if (next !== null) { history.push(cur); goTo(next, 1); }
+  }
+};
+
+window.pickCard = function(el) {
+  var grp = el.dataset.group;
+  [].forEach.call(document.querySelectorAll('[data-group="'+grp+'"]'), function(c){
+    c.classList.remove('selected');
+  });
+  el.classList.add('selected');
+  ans[grp] = el.dataset.value;
+  if (grp === 'employedElsewhere') {
+    document.getElementById('employed-warning').style.display =
+      el.dataset.value === 'yes' ? 'block' : 'none';
+  }
+  syncUI();
+  el.style.transform = 'scale(1.025)';
+  setTimeout(function(){ el.style.transform = ''; }, 160);
+  var autoAdvance = grp !== 'employedElsewhere' || el.dataset.value === 'no';
+  if (autoAdvance) {
+    setTimeout(function(){
+      if (!busy && SCREENS[cur].ok()) {
+        history.push(cur); goTo(getNextScreen(cur), 1);
+      }
+    }, 390);
+  }
+};
+
+window.syncUI = syncUI;
+
+function addInputListeners(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', syncUI);
+  el.addEventListener('keydown', function(e){
+    if (e.key==='Enter' && SCREENS[cur].ok()) {
+      history.push(cur); goTo(getNextScreen(cur), 1);
+    }
+  });
+}
+addInputListeners('day-rate');
+addInputListeners('holiday-days');
+addInputListeners('umbrella-fee');
+addInputListeners('pension-pct');
+
+function syncUI() {
+  var c = SCREENS[cur];
+  fill.style.width = c.pct+'%';
+  backBtn.classList.toggle('show', c.back);
+  stepLbl.classList.toggle('show', c.step!==null);
+  if (c.step) stepLbl.textContent = 'Step '+c.step;
+  mainBtn.textContent = c.btn;
+  mainBtn.disabled = !c.ok();
+}
+
+/* ── calculations ── */
+var calcResult = null;
+
+function calculateIR35() {
+  var dayRate        = +document.getElementById('day-rate').value || 0;
+  var daysPerWeek    = +ans.daysPerWeek || 0;
+  var holidayDays    = +document.getElementById('holiday-days').value || 0;
+  var umbrellaWeekly = +document.getElementById('umbrella-fee').value || 0;
+  var pensionPct     = ans.pension === 'yes' ? (+document.getElementById('pension-pct').value || 0) : 0;
+
+  var workingDays    = (52 * daysPerWeek) - holidayDays;
+  var annualGross    = dayRate * workingDays;
+  var umbrellaAnnual = umbrellaWeekly * 52;
+  var employerNI     = Math.max(0, (annualGross - 5000) * 0.15);
+  var levy           = annualGross * 0.005;
+  var employeeGross  = annualGross - umbrellaAnnual - employerNI - levy;
+
+  var pa = 12570;
+  if (employeeGross > 100000) pa = Math.max(0, 12570 - Math.floor((employeeGross - 100000) / 2));
+
+  var taxable = Math.max(0, employeeGross - pa);
+  var b1 = Math.min(taxable, 37700);
+  var b2 = Math.min(Math.max(taxable - 37700, 0), 74870);
+  var b3 = Math.max(taxable - 112570, 0);
+  var incomeTax = b1 * 0.20 + b2 * 0.40 + b3 * 0.45;
+
+  var employeeNI = 0;
+  if (employeeGross > 12570) {
+    employeeNI += Math.min(employeeGross - 12570, 37700) * 0.08;
+    if (employeeGross > 50270) employeeNI += (employeeGross - 50270) * 0.02;
+  }
+
+  var pension    = employeeGross * (pensionPct / 100);
+  var netAnnual  = employeeGross - incomeTax - employeeNI - pension;
+  var netMonthly = netAnnual / 12;
+  var totalDeds  = umbrellaAnnual + employerNI + levy + incomeTax + employeeNI + pension;
+  var effRate    = annualGross > 0 ? (totalDeds / annualGross) * 100 : 0;
+
+  return {
+    annualGross:annualGross, workingDays:workingDays, umbrellaAnnual:umbrellaAnnual,
+    employerNI:employerNI, levy:levy, employeeGross:employeeGross,
+    incomeTax:incomeTax, employeeNI:employeeNI, pension:pension,
+    netAnnual:netAnnual, netMonthly:netMonthly, effRate:effRate
+  };
+}
+
+function renderOutput() {
+  calcResult = calculateIR35();
+  var r  = calcResult;
+  var dr = +document.getElementById('day-rate').value;
+  var daysSub = document.getElementById('o-days-sub');
+  if (daysSub) daysSub.textContent = r.workingDays + ' days × £' + Math.round(dr).toLocaleString('en-GB');
+  var pensionRow = document.getElementById('o-pension-row');
+  if (pensionRow) {
+    pensionRow.style.display = ans.pension === 'yes' ? '' : 'none';
+    if (ans.pension === 'yes') {
+      var psub = document.getElementById('o-pension-sub');
+      if (psub) psub.textContent = document.getElementById('pension-pct').value + '% of employee gross';
+    }
+  }
+  var effEl = document.getElementById('o-eff-rate');
+  if (effEl) effEl.textContent = r.effRate.toFixed(1) + '%';
+}
+
+/* ── count-up ── */
+function resetNums() {
+  ['o-gross','o-umbrella','o-employer-ni','o-levy','o-employee-ni',
+   'o-income-tax','o-pension','o-net-annual','o-net-monthly'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.textContent = '£0';
+  });
+}
+
+function countUp() {
+  if (!calcResult) return;
+  var r = calcResult;
+  var ITEMS = [
+    { id:'o-gross',       val:r.annualGross,    neg:false },
+    { id:'o-umbrella',    val:r.umbrellaAnnual, neg:true  },
+    { id:'o-employer-ni', val:r.employerNI,     neg:true  },
+    { id:'o-levy',        val:r.levy,           neg:true  },
+    { id:'o-employee-ni', val:r.employeeNI,     neg:true  },
+    { id:'o-income-tax',  val:r.incomeTax,      neg:true  },
+    { id:'o-pension',     val:r.pension,        neg:true  },
+    { id:'o-net-annual',  val:r.netAnnual,      neg:false },
+    { id:'o-net-monthly', val:r.netMonthly,     neg:false },
+  ];
+  var DUR = 800, t0 = null;
+  function ease(t){ return 1-Math.pow(1-t,3); }
+  function frame(ts) {
+    if (!t0) t0 = ts;
+    var p = Math.min((ts-t0)/DUR, 1);
+    var e = ease(p);
+    ITEMS.forEach(function(item){
+      var el = document.getElementById(item.id);
+      if (!el) return;
+      var prow = document.getElementById('o-pension-row');
+      if (item.id === 'o-pension' && prow && prow.style.display === 'none') return;
+      el.textContent = (item.neg?'-':'')+'£'+Math.round(e*item.val).toLocaleString('en-GB');
+    });
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function staggerIn() {
+  var cards = [].slice.call(document.querySelectorAll('#screen-9 .out-card, #screen-9 .hero'));
+  var visible = cards.filter(function(c){ return c.style.display !== 'none'; });
+  visible.forEach(function(card, i){
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(16px)';
+    card.style.transition = 'none';
+    setTimeout(function(){
+      card.style.transition = 'opacity 300ms ease, transform 300ms ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, i * 100);
+  });
+}
+
+function resetAll() {
+  ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null };
+  history = []; calcResult = null;
+  ['day-rate','holiday-days','pension-pct'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var uf = document.getElementById('umbrella-fee');
+  if (uf) uf.value = '20';
+  var ew = document.getElementById('employed-warning');
+  if (ew) ew.style.display = 'none';
+  [].forEach.call(document.querySelectorAll('.card'), function(c){ c.classList.remove('selected'); });
+}
+
+}());
+</script>
+</body>
+</html>
