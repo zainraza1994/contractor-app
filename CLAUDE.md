@@ -79,10 +79,36 @@ and a combined total take-home across all directors.
 Built in 6 stages:
 - [x] Stage 1: UI shell and design system
 - [x] Stage 2: Inside IR35 route and calculations
-- [x] Stage 3: Sole Trader route and calculations
-- [x] Stage 4: Limited Company, single director
-- [x] Stage 5: Limited Company, multiple directors
-- [x] Stage 6: Comparison screen, PWA install, final polish
+- [ ] Stage 3: Sole Trader route and calculations
+- [ ] Stage 4: Limited Company, single director
+- [ ] Stage 5: Limited Company, multiple directors
+- [ ] Stage 6: Comparison screen, PWA install, final polish
+
+## Navigation architecture (important for future changes)
+The JavaScript uses a **history-stack navigation** — not a linear index. Key pieces:
+
+- `SCREENS` — object map (keys 0–9) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue
+- `history` — array stack; `onContinue()` pushes current index before advancing; `goBack()` pops and returns
+- `getNextScreen(idx)` — returns the next screen index, handling the one branch: screen 6 (pension yes/no) → screen 7 if `ans.pension === 'yes'`, else screen 8
+- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere }`
+
+**When adding Outside IR35 routes:** `getNextScreen(1)` currently returns 2 unconditionally. It will need to branch based on `ans.ir35` to route Sole Trader and Limited Company flows to their own screens.
+
+## Screen map — Inside IR35 (screens 0–9, all built)
+| Index | ID | Content |
+|---|---|---|
+| 0 | screen-0 | Welcome |
+| 1 | screen-1 | IR35 choice (inside / outside) |
+| 2 | screen-2 | Day rate (£ input) |
+| 3 | screen-3 | Days per week (tappable cards 1–5) |
+| 4 | screen-4 | Days holiday per year (number input) |
+| 5 | screen-5 | Umbrella fee per week (£ input, default £20) |
+| 6 | screen-6 | Pension? Yes/No cards |
+| 7 | screen-7 | Pension % (conditional — only if pension=yes) |
+| 8 | screen-8 | Employed elsewhere? Yes/No + warning banner if yes |
+| 9 | screen-9 | IR35 output — full calculated breakdown |
+
+Outside IR35 screens (Sole Trader, Ltd Co) are not yet built. They will be added after screen-9, with `getNextScreen` updated to route to them from screen 1.
 
 ## Disclaimer (always present on output screens)
 "This calculator provides estimates only and does not constitute financial or tax advice.
