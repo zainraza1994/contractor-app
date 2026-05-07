@@ -206,6 +206,27 @@ html,body{
 .o-val.neg{color:var(--red)}
 .o-sub{font-size:12px;color:rgba(13,27,42,.38);margin-top:5px}
 
+/* ── Out-row (Ltd Co breakdown cards) ── */
+.out-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;
+  border-bottom:1px solid rgba(13,27,42,.06);
+  font-size:14px;
+}
+.out-row:last-child{border-bottom:none}
+.out-row-lbl{color:rgba(13,27,42,.55)}
+.out-row-val{font-weight:700;color:#0D1B2A;font-family:'DM Serif Display',serif;font-size:17px}
+.out-row-val.pos{color:#009E72}
+.out-row-val.neg{color:#FF6B6B}
+.out-row-val.lg{font-size:24px}
+.out-row-total{border-top:1px solid rgba(13,27,42,.1);margin-top:4px;padding-top:12px;border-bottom:none!important}
+.out-row-lbl-bold{font-weight:600;color:#0D1B2A}
+.salary-split{display:flex;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(13,27,42,.08)}
+.salary-col{flex:1}
+.salary-col-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(13,27,42,.4);margin-bottom:4px}
+.salary-col-val{font-family:'DM Serif Display',serif;font-size:28px;color:#0D1B2A}
+.salary-col-val.pos{color:#009E72}
+
 /* ── Footer ── */
 #chrome-bot{
   position:fixed;inset:auto 0 0 0;z-index:200;
@@ -523,6 +544,280 @@ html,body{
   </div>
 </div>
 
+<!-- SCREEN 10 — Ltd Co Day Rate -->
+<div class="screen" id="screen-10">
+  <div class="lbl">Day Rate</div>
+  <h2 class="q-h">What is your day rate?</h2>
+  <p class="q-s">Your standard daily charge to clients.</p>
+  <div class="inp-row">
+    <span class="inp-pfx">£</span>
+    <input class="num" id="ltd-day-rate" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
+  </div>
+  <div class="inp-hint">Typical rates range from £300 to £1,200 per day</div>
+</div>
+
+<!-- SCREEN 11 — Ltd Co Days per week -->
+<div class="screen" id="screen-11">
+  <div class="lbl">Working Pattern</div>
+  <h2 class="q-h">How many days do you work per week?</h2>
+  <p class="q-s">Your typical contracted days per week.</p>
+  <div class="cards cards-num">
+    <div class="card" data-group="ltdDaysPerWeek" data-value="5" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">5 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ltdDaysPerWeek" data-value="4" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">4 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ltdDaysPerWeek" data-value="3" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">3 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ltdDaysPerWeek" data-value="2" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">2 days</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ltdDaysPerWeek" data-value="1" onclick="pickCard(this)">
+      <div class="card-body"><div class="c-title">1 day</div></div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 12 — Ltd Co Holiday days -->
+<div class="screen" id="screen-12">
+  <div class="lbl">Time Off</div>
+  <h2 class="q-h">How many days holiday do you take per year?</h2>
+  <p class="q-s">Include bank holidays if you don't work them.</p>
+  <div class="inp-row">
+    <input class="num" id="ltd-holiday-days" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
+  </div>
+  <div class="inp-hint">UK contractors typically take 20–30 days including bank holidays</div>
+</div>
+
+<!-- SCREEN 13 — Number of directors -->
+<div class="screen" id="screen-13">
+  <div class="lbl">Company Setup</div>
+  <h2 class="q-h">How many directors / shareholders?</h2>
+  <p class="q-s">We'll calculate each director's personal tax position.</p>
+  <div class="cards">
+    <div class="card" data-group="numDirectors" data-value="1" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">1 director</div>
+        <div class="c-desc">Single director and shareholder</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 14 — Director salary -->
+<div class="screen" id="screen-14">
+  <div class="lbl">Director Salary</div>
+  <h2 class="q-h">What salary does the director take?</h2>
+  <p class="q-s">£12,570 is optimal — uses your personal allowance with no Income Tax or NI</p>
+  <div class="inp-row">
+    <span class="inp-pfx">£</span>
+    <input class="num" id="ltd-salary" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off"
+      value="12570" oninput="syncUI()">
+  </div>
+</div>
+
+<!-- SCREEN 15 — Ltd Co Employed elsewhere -->
+<div class="screen" id="screen-15">
+  <div class="lbl">Other Income</div>
+  <h2 class="q-h">Is the director employed elsewhere?</h2>
+  <p class="q-s">This can affect personal allowance and NI thresholds.</p>
+  <div class="cards">
+    <div class="card" data-group="ltdEmployedElsewhere" data-value="no" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">No</div>
+        <div class="c-desc">This is the director's only source of income</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ltdEmployedElsewhere" data-value="yes" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Yes</div>
+        <div class="c-desc">The director also has a PAYE job or other employment</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="emp-warning" id="ltd-employed-warning">
+    <p>&#9888;&#xFE0F; The director's personal allowance and NI thresholds may already be used by their other employment. The figures shown may not reflect actual tax liability — please speak to an accountant.</p>
+  </div>
+</div>
+
+<!-- SCREEN 16 — Monthly company expenses -->
+<div class="screen" id="screen-16">
+  <div class="lbl">Company Expenses</div>
+  <h2 class="q-h">What are the monthly company expenses?</h2>
+  <p class="q-s">Accountancy, phone, software, travel</p>
+  <div class="inp-row">
+    <span class="inp-pfx">£</span>
+    <input class="num" id="ltd-expenses" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off"
+      value="150" oninput="syncUI()">
+  </div>
+</div>
+
+<!-- SCREEN 17 — Company pension -->
+<div class="screen" id="screen-17">
+  <div class="lbl">Pension</div>
+  <h2 class="q-h">Does the director pay into a pension through the company?</h2>
+  <p class="q-s">Company contributions reduce Corporation Tax.</p>
+  <div class="cards">
+    <div class="card" data-group="ltdPension" data-value="yes" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Yes</div>
+        <div class="c-desc">The company makes pension contributions</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="ltdPension" data-value="no" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">No</div>
+        <div class="c-desc">No pension contributions at this time</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 18 — Monthly pension amount (conditional) -->
+<div class="screen" id="screen-18">
+  <div class="lbl">Pension</div>
+  <h2 class="q-h">What is the monthly company pension contribution?</h2>
+  <p class="q-s">This is paid by the company, not from the director's salary.</p>
+  <div class="inp-row">
+    <span class="inp-pfx">£</span>
+    <input class="num" id="ltd-pension-amount" type="number" inputmode="numeric"
+      pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
+  </div>
+</div>
+
+<!-- SCREEN 19 — Ltd Co Output -->
+<div class="screen" id="screen-19">
+  <div class="lbl">Your Ltd Co Estimate</div>
+  <h2 class="q-h" style="margin-bottom:20px">Here's your breakdown</h2>
+
+  <div class="hero">
+    <div class="h-lbl">Net Annual Take-Home</div>
+    <div class="h-val" id="o-ltd-net-annual">£0</div>
+    <div class="h-sub" id="o-ltd-days-sub">after all deductions</div>
+  </div>
+
+  <div class="out-cards">
+
+    <div class="out-card">
+      <div class="o-lbl">Company</div>
+      <div class="out-row">
+        <span class="out-row-lbl">Gross Revenue</span>
+        <span class="out-row-val pos" id="o-ltd-gross">£0</span>
+      </div>
+      <div class="out-row">
+        <span class="out-row-lbl">Expenses</span>
+        <span class="out-row-val neg" id="o-ltd-expenses-out">-£0</span>
+      </div>
+      <div class="out-row">
+        <span class="out-row-lbl">Director Salary</span>
+        <span class="out-row-val neg" id="o-ltd-salary-out">-£0</span>
+      </div>
+      <div class="out-row" id="o-ltd-pension-row">
+        <span class="out-row-lbl">Pension</span>
+        <span class="out-row-val neg" id="o-ltd-pension-corp">-£0</span>
+      </div>
+      <div class="out-row">
+        <span class="out-row-lbl">Corporation Tax</span>
+        <span class="out-row-val neg" id="o-ltd-corp-tax">-£0</span>
+      </div>
+      <div class="out-row out-row-total">
+        <span class="out-row-lbl out-row-lbl-bold">Dividends Available</span>
+        <span class="out-row-val pos" id="o-ltd-dividends">£0</span>
+      </div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Director</div>
+      <div class="salary-split">
+        <div class="salary-col">
+          <div class="salary-col-lbl">Gross Salary</div>
+          <div class="salary-col-val" id="o-ltd-gross-salary">£0</div>
+        </div>
+        <div class="salary-col">
+          <div class="salary-col-lbl">Net Salary</div>
+          <div class="salary-col-val pos" id="o-ltd-net-salary">£0</div>
+        </div>
+      </div>
+      <div class="out-row">
+        <span class="out-row-lbl">Dividends Received</span>
+        <span class="out-row-val pos" id="o-ltd-divs-received">£0</span>
+      </div>
+      <div class="out-row">
+        <span class="out-row-lbl">Dividend Tax</span>
+        <span class="out-row-val neg" id="o-ltd-div-tax">-£0</span>
+      </div>
+      <div class="out-row out-row-total">
+        <span class="out-row-lbl out-row-lbl-bold">Director Net Take-Home</span>
+        <span class="out-row-val pos lg" id="o-ltd-director-net">£0</span>
+      </div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Net Monthly Take-Home</div>
+      <div class="o-val pos" id="o-ltd-net-monthly">£0</div>
+      <div class="o-sub">take-home per month</div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Effective Tax Rate</div>
+      <div class="o-val" id="o-ltd-eff-rate" style="color:#0D1B2A">0%</div>
+      <div class="o-sub">of gross contract value</div>
+    </div>
+
+    <div class="disclaimer">
+      This calculator provides estimates only and does not constitute financial or tax advice.
+      Tax rules are complex and individual circumstances vary. Please consult a qualified accountant.
+    </div>
+
+  </div>
+</div>
+
 <!-- BOTTOM CHROME -->
 <div id="chrome-bot">
   <button class="btn" id="main-btn" onclick="onContinue()">Get Started</button>
@@ -535,7 +830,9 @@ html,body{
 
 var cur = 0, busy = false;
 var history = [];
-var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null };
+var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
+            ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null };
+var ltdCalcResult = null;
 
 var screens = [].slice.call(document.querySelectorAll('.screen'));
 var fill    = document.getElementById('prog-fill');
@@ -554,11 +851,21 @@ var SCREENS = {
   7: { pct:80,  back:true,  step:'6 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('pension-pct').value; return v!==''&&+v>0&&+v<=100; } },
   8: { pct:88,  back:true,  step:'7 of 7', btn:'Continue',    ok:function(){ return ans.employedElsewhere !== null; } },
   9: { pct:100, back:true,  step:'Done',   btn:'Recalculate', ok:function(){ return true; } },
+  10: { pct:8,   back:true, step:'1 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-day-rate').value; return v!==''&&+v>0; } },
+  11: { pct:18,  back:true, step:'2 of 9', btn:'Continue',    ok:function(){ return ans.ltdDaysPerWeek !== null; } },
+  12: { pct:27,  back:true, step:'3 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-holiday-days').value; return v!==''&&+v>=0&&+v<365; } },
+  13: { pct:36,  back:true, step:'4 of 9', btn:'Continue',    ok:function(){ return ans.numDirectors !== null; } },
+  14: { pct:45,  back:true, step:'5 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-salary').value; return v!==''&&+v>=0; } },
+  15: { pct:54,  back:true, step:'6 of 9', btn:'Continue',    ok:function(){ return ans.ltdEmployedElsewhere !== null; } },
+  16: { pct:63,  back:true, step:'7 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-expenses').value; return v!==''&&+v>=0; } },
+  17: { pct:72,  back:true, step:'8 of 9', btn:'Continue',    ok:function(){ return ans.ltdPension !== null; } },
+  18: { pct:82,  back:true, step:'8 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-pension-amount').value; return v!==''&&+v>0; } },
+  19: { pct:100, back:true, step:'Done',   btn:'Recalculate', ok:function(){ return true; } },
 };
 
 function getNextScreen(idx) {
   if (idx === 0) return 1;
-  if (idx === 1) return 2;
+  if (idx === 1) return ans.ir35 === 'outside' ? 10 : 2;
   if (idx === 2) return 3;
   if (idx === 3) return 4;
   if (idx === 4) return 5;
@@ -566,6 +873,15 @@ function getNextScreen(idx) {
   if (idx === 6) return ans.pension === 'yes' ? 7 : 8;
   if (idx === 7) return 8;
   if (idx === 8) return 9;
+  if (idx === 10) return 11;
+  if (idx === 11) return 12;
+  if (idx === 12) return 13;
+  if (idx === 13) return 14;
+  if (idx === 14) return 15;
+  if (idx === 15) return 16;
+  if (idx === 16) return 17;
+  if (idx === 17) return ans.ltdPension === 'yes' ? 18 : 19;
+  if (idx === 18) return 19;
   return null;
 }
 
@@ -608,6 +924,17 @@ function onEnter(idx) {
     setTimeout(staggerIn, 100);
     setTimeout(countUp, 200);
   }
+  if (idx === 10) setTimeout(function(){ document.getElementById('ltd-day-rate').focus(); }, 340);
+  if (idx === 12) setTimeout(function(){ document.getElementById('ltd-holiday-days').focus(); }, 340);
+  if (idx === 14) setTimeout(function(){ document.getElementById('ltd-salary').focus(); }, 340);
+  if (idx === 16) setTimeout(function(){ document.getElementById('ltd-expenses').focus(); }, 340);
+  if (idx === 18) setTimeout(function(){ document.getElementById('ltd-pension-amount').focus(); }, 340);
+  if (idx === 19) {
+    renderLtdOutput();
+    resetLtdNums();
+    setTimeout(staggerIn, 100);
+    setTimeout(countUp, 200);
+  }
 }
 
 window.goBack = function(){
@@ -618,7 +945,7 @@ window.goBack = function(){
 
 window.onContinue = function(){
   if (!SCREENS[cur].ok()) return;
-  if (cur === 9) {
+  if (cur === 9 || cur === 19) {
     resetAll();
     goTo(0, -1);
   } else {
@@ -638,10 +965,15 @@ window.pickCard = function(el) {
     document.getElementById('employed-warning').style.display =
       el.dataset.value === 'yes' ? 'block' : 'none';
   }
+  if (grp === 'ltdEmployedElsewhere') {
+    document.getElementById('ltd-employed-warning').style.display =
+      el.dataset.value === 'yes' ? 'block' : 'none';
+  }
   syncUI();
   el.style.transform = 'scale(1.025)';
   setTimeout(function(){ el.style.transform = ''; }, 160);
-  var autoAdvance = grp !== 'employedElsewhere' || el.dataset.value === 'no';
+  var isEmpElsewhere = grp === 'employedElsewhere' || grp === 'ltdEmployedElsewhere';
+  var autoAdvance = !isEmpElsewhere || el.dataset.value === 'no';
   if (autoAdvance) {
     setTimeout(function(){
       if (!busy && SCREENS[cur].ok()) {
@@ -667,6 +999,11 @@ addInputListeners('day-rate');
 addInputListeners('holiday-days');
 addInputListeners('umbrella-fee');
 addInputListeners('pension-pct');
+addInputListeners('ltd-day-rate');
+addInputListeners('ltd-holiday-days');
+addInputListeners('ltd-salary');
+addInputListeners('ltd-expenses');
+addInputListeners('ltd-pension-amount');
 
 function syncUI() {
   var c = SCREENS[cur];
@@ -752,19 +1089,40 @@ function resetNums() {
 }
 
 function countUp() {
-  if (!calcResult) return;
-  var r = calcResult;
-  var ITEMS = [
-    { id:'o-gross',       val:r.annualGross,    neg:false },
-    { id:'o-umbrella',    val:r.umbrellaAnnual, neg:true  },
-    { id:'o-employer-ni', val:r.employerNI,     neg:true  },
-    { id:'o-levy',        val:r.levy,           neg:true  },
-    { id:'o-employee-ni', val:r.employeeNI,     neg:true  },
-    { id:'o-income-tax',  val:r.incomeTax,      neg:true  },
-    { id:'o-pension',     val:r.pension,        neg:true  },
-    { id:'o-net-annual',  val:r.netAnnual,      neg:false },
-    { id:'o-net-monthly', val:r.netMonthly,     neg:false },
-  ];
+  var ITEMS;
+  if (cur === 19) {
+    if (!ltdCalcResult) return;
+    var lr = ltdCalcResult;
+    ITEMS = [
+      { id:'o-ltd-net-annual',    val:lr.netAnnual,             neg:false },
+      { id:'o-ltd-gross',         val:lr.annualGross,           neg:false },
+      { id:'o-ltd-expenses-out',  val:lr.annualExpenses,        neg:true  },
+      { id:'o-ltd-salary-out',    val:lr.directorSalary,        neg:true  },
+      { id:'o-ltd-pension-corp',  val:lr.annualPension,         neg:true  },
+      { id:'o-ltd-corp-tax',      val:lr.corporationTax,        neg:true  },
+      { id:'o-ltd-dividends',     val:lr.dividendsAvailable,    neg:false },
+      { id:'o-ltd-gross-salary',  val:lr.directorSalary,        neg:false },
+      { id:'o-ltd-net-salary',    val:lr.netSalary,             neg:false },
+      { id:'o-ltd-divs-received', val:lr.dividendsAvailable,    neg:false },
+      { id:'o-ltd-div-tax',       val:lr.divTax,                neg:true  },
+      { id:'o-ltd-director-net',  val:lr.netAnnual,             neg:false },
+      { id:'o-ltd-net-monthly',   val:lr.netMonthly,            neg:false },
+    ];
+  } else {
+    if (!calcResult) return;
+    var r = calcResult;
+    ITEMS = [
+      { id:'o-gross',       val:r.annualGross,    neg:false },
+      { id:'o-umbrella',    val:r.umbrellaAnnual, neg:true  },
+      { id:'o-employer-ni', val:r.employerNI,     neg:true  },
+      { id:'o-levy',        val:r.levy,           neg:true  },
+      { id:'o-employee-ni', val:r.employeeNI,     neg:true  },
+      { id:'o-income-tax',  val:r.incomeTax,      neg:true  },
+      { id:'o-pension',     val:r.pension,        neg:true  },
+      { id:'o-net-annual',  val:r.netAnnual,      neg:false },
+      { id:'o-net-monthly', val:r.netMonthly,     neg:false },
+    ];
+  }
   var DUR = 800, t0 = null;
   function ease(t){ return 1-Math.pow(1-t,3); }
   function frame(ts) {
@@ -776,6 +1134,8 @@ function countUp() {
       if (!el) return;
       var prow = document.getElementById('o-pension-row');
       if (item.id === 'o-pension' && prow && prow.style.display === 'none') return;
+      var ltdPRow = document.getElementById('o-ltd-pension-row');
+      if (item.id === 'o-ltd-pension-corp' && ltdPRow && ltdPRow.style.display === 'none') return;
       el.textContent = (item.neg?'-':'')+'£'+Math.round(e*item.val).toLocaleString('en-GB');
     });
     if (p < 1) requestAnimationFrame(frame);
@@ -784,7 +1144,8 @@ function countUp() {
 }
 
 function staggerIn() {
-  var cards = [].slice.call(document.querySelectorAll('#screen-9 .out-card, #screen-9 .hero'));
+  var sel = cur === 19 ? '#screen-19' : '#screen-9';
+  var cards = [].slice.call(document.querySelectorAll(sel+' .out-card, '+sel+' .hero'));
   var visible = cards.filter(function(c){ return c.style.display !== 'none'; });
   visible.forEach(function(card, i){
     card.style.opacity = '0';
@@ -798,17 +1159,123 @@ function staggerIn() {
   });
 }
 
+function calculateLtdCo() {
+  var ltdDayRate        = +document.getElementById('ltd-day-rate').value || 0;
+  var ltdDaysPerWeek    = +ans.ltdDaysPerWeek || 0;
+  var ltdHolidayDays    = +document.getElementById('ltd-holiday-days').value || 0;
+  var directorSalary    = +document.getElementById('ltd-salary').value || 0;
+  var ltdExpensesMonthly= +document.getElementById('ltd-expenses').value || 0;
+  var ltdPensionMonthly = ans.ltdPension === 'yes' ? (+document.getElementById('ltd-pension-amount').value || 0) : 0;
+
+  var workingDays    = (52 * ltdDaysPerWeek) - ltdHolidayDays;
+  var annualGross    = ltdDayRate * workingDays;
+  var annualExpenses = ltdExpensesMonthly * 12;
+  var annualPension  = ltdPensionMonthly * 12;
+  var taxableProfit  = annualGross - annualExpenses - directorSalary - annualPension;
+
+  var corporationTax = 0;
+  if (taxableProfit > 0) {
+    if (taxableProfit <= 50000) {
+      corporationTax = taxableProfit * 0.19;
+    } else if (taxableProfit <= 250000) {
+      corporationTax = taxableProfit * 0.25 - (250000 - taxableProfit) * (3/200);
+    } else {
+      corporationTax = taxableProfit * 0.25;
+    }
+  }
+
+  var dividendsAvailable = Math.max(0, taxableProfit - corporationTax);
+
+  var totalPersonalIncome = directorSalary + dividendsAvailable;
+  var pa = 12570;
+  if (ans.ltdEmployedElsewhere === 'yes') {
+    pa = 0;
+  } else if (totalPersonalIncome > 100000) {
+    pa = Math.max(0, 12570 - Math.floor((totalPersonalIncome - 100000) / 2));
+  }
+
+  var taxableSalary  = Math.max(0, directorSalary - pa);
+  var basicBandWidth = Math.max(0, 50270 - pa);
+  var salTax = Math.min(taxableSalary, basicBandWidth) * 0.20
+             + Math.min(Math.max(taxableSalary - basicBandWidth, 0), 74870) * 0.40
+             + Math.max(taxableSalary - basicBandWidth - 74870, 0) * 0.45;
+
+  var salaryNI = 0;
+  if (directorSalary > 12570) {
+    salaryNI += Math.min(directorSalary - 12570, 37700) * 0.08;
+    if (directorSalary > 50270) salaryNI += (directorSalary - 50270) * 0.02;
+  }
+
+  var divs = dividendsAvailable;
+  var divInBasic      = Math.max(0, Math.min(directorSalary + divs, 50270)  - Math.max(directorSalary, 12570));
+  var divInHigher     = Math.max(0, Math.min(directorSalary + divs, 125140) - Math.max(directorSalary, 50270));
+  var divInAdditional = Math.max(0, (directorSalary + divs) - Math.max(directorSalary, 125140));
+
+  var allowance = 500;
+  var taxableBasic      = Math.max(0, divInBasic - allowance);
+  allowance = Math.max(0, allowance - divInBasic);
+  var taxableHigher     = Math.max(0, divInHigher - allowance);
+  allowance = Math.max(0, allowance - divInHigher);
+  var taxableAdditional = Math.max(0, divInAdditional - allowance);
+
+  var divTax = taxableBasic * 0.1075 + taxableHigher * 0.3575 + taxableAdditional * 0.3935;
+
+  var netSalary  = directorSalary - salTax - salaryNI;
+  var netDivs    = divs - divTax;
+  var netAnnual  = netSalary + netDivs;
+  var netMonthly = netAnnual / 12;
+  var effRate    = annualGross > 0 ? (annualGross - netAnnual) / annualGross * 100 : 0;
+
+  return {
+    ltdDayRate:ltdDayRate, workingDays:workingDays, annualGross:annualGross,
+    annualExpenses:annualExpenses, directorSalary:directorSalary, annualPension:annualPension,
+    taxableProfit:taxableProfit, corporationTax:corporationTax,
+    dividendsAvailable:dividendsAvailable, pa:pa,
+    salTax:salTax, salaryNI:salaryNI, divTax:divTax,
+    netSalary:netSalary, netDivs:netDivs, netAnnual:netAnnual,
+    netMonthly:netMonthly, effRate:effRate
+  };
+}
+
+function resetLtdNums() {
+  ['o-ltd-net-annual','o-ltd-gross','o-ltd-expenses-out','o-ltd-salary-out',
+   'o-ltd-pension-corp','o-ltd-corp-tax','o-ltd-dividends',
+   'o-ltd-gross-salary','o-ltd-net-salary','o-ltd-divs-received',
+   'o-ltd-div-tax','o-ltd-director-net','o-ltd-net-monthly'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.textContent = '£0';
+  });
+}
+
+function renderLtdOutput() {
+  ltdCalcResult = calculateLtdCo();
+  var r = ltdCalcResult;
+  var daysSub = document.getElementById('o-ltd-days-sub');
+  if (daysSub) daysSub.textContent = r.workingDays + ' days × £' + Math.round(r.ltdDayRate).toLocaleString('en-GB');
+  var pensionRow = document.getElementById('o-ltd-pension-row');
+  if (pensionRow) pensionRow.style.display = ans.ltdPension === 'yes' ? '' : 'none';
+  var effEl = document.getElementById('o-ltd-eff-rate');
+  if (effEl) effEl.textContent = r.effRate.toFixed(1) + '%';
+}
+
 function resetAll() {
-  ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null };
-  history = []; calcResult = null;
-  ['day-rate','holiday-days','pension-pct'].forEach(function(id){
+  ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
+          ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null };
+  history = []; calcResult = null; ltdCalcResult = null;
+  ['day-rate','holiday-days','pension-pct','ltd-day-rate','ltd-holiday-days','ltd-pension-amount'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
   var uf = document.getElementById('umbrella-fee');
   if (uf) uf.value = '20';
+  var ls = document.getElementById('ltd-salary');
+  if (ls) ls.value = '12570';
+  var le = document.getElementById('ltd-expenses');
+  if (le) le.value = '150';
   var ew = document.getElementById('employed-warning');
   if (ew) ew.style.display = 'none';
+  var lew = document.getElementById('ltd-employed-warning');
+  if (lew) lew.style.display = 'none';
   [].forEach.call(document.querySelectorAll('.card'), function(c){ c.classList.remove('selected'); });
 }
 
