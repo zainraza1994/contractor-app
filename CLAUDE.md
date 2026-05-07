@@ -80,21 +80,27 @@ Built in 6 stages:
 - [x] Stage 1: UI shell and design system
 - [x] Stage 2: Inside IR35 route and calculations
 - [ ] Stage 3: Sole Trader route and calculations
-- [ ] Stage 4: Limited Company, single director
+- [x] Stage 4: Limited Company, single director
 - [ ] Stage 5: Limited Company, multiple directors
 - [ ] Stage 6: Comparison screen, PWA install, final polish
 
 ## Navigation architecture (important for future changes)
 The JavaScript uses a **history-stack navigation** — not a linear index. Key pieces:
 
-- `SCREENS` — object map (keys 0–9) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue
+- `SCREENS` — object map (keys 0–19) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue
 - `history` — array stack; `onContinue()` pushes current index before advancing; `goBack()` pops and returns
-- `getNextScreen(idx)` — returns the next screen index, handling the one branch: screen 6 (pension yes/no) → screen 7 if `ans.pension === 'yes'`, else screen 8
-- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere }`
+- `getNextScreen(idx)` — handles all routing branches:
+  - Screen 1 → screen 10 if `ans.ir35 === 'outside'`, else screen 2 (Inside IR35)
+  - Screen 6 → screen 7 if `ans.pension === 'yes'`, else screen 8
+  - Screen 17 → screen 18 if `ans.ltdPension === 'yes'`, else screen 19
+- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension }`
+- Both output screens (9 and 19) use "Recalculate" which calls `resetAll()` and returns to screen 0
 
-**When adding Outside IR35 routes:** `getNextScreen(1)` currently returns 2 unconditionally. It will need to branch based on `ans.ir35` to route Sole Trader and Limited Company flows to their own screens.
+**When adding the Sole Trader route:** add its screens (20+), update `getNextScreen(1)` to branch on `ans.ir35 === 'sole-trader'`, and add a new `ir35` card value for sole trader on screen 1.
 
-## Screen map — Inside IR35 (screens 0–9, all built)
+**When adding multiple directors (Stage 5):** screen 13 will gain additional cards (2–10 directors); `getNextScreen(13)` will branch to a director-detail loop for counts > 1.
+
+## Screen map — Inside IR35 (screens 0–9)
 | Index | ID | Content |
 |---|---|---|
 | 0 | screen-0 | Welcome |
@@ -108,7 +114,27 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 8 | screen-8 | Employed elsewhere? Yes/No + warning banner if yes |
 | 9 | screen-9 | IR35 output — full calculated breakdown |
 
-Outside IR35 screens (Sole Trader, Ltd Co) are not yet built. They will be added after screen-9, with `getNextScreen` updated to route to them from screen 1.
+## Screen map — Outside IR35 Ltd Co single director (screens 10–19)
+| Index | ID | Content |
+|---|---|---|
+| 10 | screen-10 | Day rate (£ input, id `ltd-day-rate`) |
+| 11 | screen-11 | Days per week (tappable cards, data-group `ltdDaysPerWeek`) |
+| 12 | screen-12 | Days holiday per year (number input, id `ltd-holiday-days`) |
+| 13 | screen-13 | Number of directors (single card "1 director", data-group `numDirectors`) |
+| 14 | screen-14 | Director salary (£ input, id `ltd-salary`, default £12,570) |
+| 15 | screen-15 | Employed elsewhere? Yes/No + warning banner (data-group `ltdEmployedElsewhere`) |
+| 16 | screen-16 | Monthly company expenses (£ input, id `ltd-expenses`, default £150) |
+| 17 | screen-17 | Company pension? Yes/No cards (data-group `ltdPension`) |
+| 18 | screen-18 | Monthly pension amount (£ input, id `ltd-pension-amount`, conditional) |
+| 19 | screen-19 | Ltd Co output — Company card + Director card + summary |
+
+## Ltd Co output layout (screen 19)
+- **Hero card** — Net Annual Take-Home (count-up animation)
+- **Company card** — Gross Revenue, Expenses, Director Salary, Pension (hidden if none), Corporation Tax, Dividends Available
+- **Director card** — Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home
+- **Net Monthly Take-Home** card
+- **Effective Tax Rate** card
+- Disclaimer
 
 ## Disclaimer (always present on output screens)
 "This calculator provides estimates only and does not constitute financial or tax advice.
