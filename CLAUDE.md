@@ -139,7 +139,7 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 ### Shared expenses (all director counts)
 | Index | ID | Content |
 |---|---|---|
-| 16 | screen-16 | Monthly company expenses (£ input, id `ltd-expenses`, default £150) |
+| 16 | screen-16 | Monthly company expenses — 2-column grid of 9 category inputs (see below) |
 | 19 | screen-19 | Ltd Co output — Company card + per-director cards + summary |
 
 ### Director detail loop (screens 20–25, 2+ directors only — repeated once per director)
@@ -154,9 +154,31 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 
 The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
 
+## Screen 16 — Expense categories
+Screen 16 is a 2-column grid of 9 compact input cards, all blank by default. The `EXP_CATS` array
+(defined at the top of the IIFE) is the single source of truth for IDs and labels:
+
+| Input ID | Label (output) | Card display |
+|---|---|---|
+| `exp-accounting` | Accounting fees | Accounting fees |
+| `exp-travel` | Travel | Travel |
+| `exp-insurance` | Insurance | Insurance |
+| `exp-equipment` | Equipment | Equipment |
+| `exp-software` | Software & subscriptions | Software & subs |
+| `exp-phone` | Phone & communications | Phone & comms |
+| `exp-food` | Food & entertainment | Food & entertain |
+| `exp-wages` | Other wages | Other wages |
+| `exp-misc` | Miscellaneous | Miscellaneous |
+
+- A live "Total: £X/month" line (id `exp-total-lbl`, styled in `--emerald`) updates via `syncUI()`.
+- `getExpTotal()` sums all 9 inputs; SCREENS[16].ok() requires total ≥ 1.
+- `calculateLtdCo()` reads expenses via `EXP_CATS` → stores both the total and an `expBreakdown` array in its return value.
+- **Do not add a default value to any expense input** — they are intentionally blank.
+- **Do not replace with a single input** — the categorised grid is the intended design.
+
 ## Ltd Co output layout (screen 19)
 - **Hero card** — Net Annual Take-Home (count-up animation; combined total for 2+ directors)
-- **Company card** — Gross Revenue, Expenses, Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
+- **Company card** — Gross Revenue, Expenses (with indented per-category breakdown beneath for non-zero categories, populated by `renderLtdOutput()` into `#o-ltd-expenses-breakdown`), Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
 - **Director cards** — one per director, generated dynamically into `#director-cards-container`. Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
 - **Combined Total card** (`#o-combined-card`) — visible for 2+ directors only; shows Total Net Take-Home, Total Tax Paid, Combined Effective Rate
 - **Net Monthly Take-Home** card — visible for 1 director only
