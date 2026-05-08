@@ -1300,7 +1300,7 @@ var mainBtn = document.getElementById('main-btn');
 function loopPct(fieldIdx) {
   var n = dirLoop.current;
   var total = +ans.numDirectors || 1;
-  return Math.round(36 + 54 * (n * 6 + fieldIdx) / (total * 6));
+  return Math.round(36 + 54 * (n * 7 + fieldIdx) / (total * 7));
 }
 function loopStep() {
   return 'Director ' + (dirLoop.current + 1) + ' of ' + (+ans.numDirectors);
@@ -1308,24 +1308,24 @@ function loopStep() {
 
 var SCREENS = {
   0: { pct:0,   back:false, step:null,     btn:'Get Started', ok:function(){ return true; } },
-  1: { pct:12,  back:true,  step:'1 of 7', btn:'Continue',    ok:function(){ return ans.ir35 !== null; } },
-  2: { pct:24,  back:true,  step:'2 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('day-rate').value; return v!==''&&+v>0; } },
-  3: { pct:36,  back:true,  step:'3 of 7', btn:'Continue',    ok:function(){ return ans.daysPerWeek !== null; } },
-  4: { pct:48,  back:true,  step:'4 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('holiday-days').value; return v!==''&&+v>=0&&+v<365; } },
-  5: { pct:60,  back:true,  step:'5 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('umbrella-fee').value; return v!==''&&+v>=0; } },
-  6: { pct:72,  back:true,  step:'6 of 7', btn:'Continue',    ok:function(){ return ans.pension !== null; } },
-  7: { pct:80,  back:true,  step:'6 of 7', btn:'Continue',    ok:function(){ var v=document.getElementById('pension-pct').value; return v!==''&&+v>0&&+v<=100; } },
-  8: { pct:88,  back:true,  step:'7 of 7', btn:'Continue',    ok:function(){ return ans.employedElsewhere !== null; } },
+  1: { pct:11,  back:true,  step:'1 of 8', btn:'Continue',    ok:function(){ return ans.ir35 !== null; } },
+  2: { pct:22,  back:true,  step:'2 of 8', btn:'Continue',    ok:function(){ var v=document.getElementById('day-rate').value; return v!==''&&+v>0; } },
+  3: { pct:33,  back:true,  step:'3 of 8', btn:'Continue',    ok:function(){ return ans.daysPerWeek !== null; } },
+  4: { pct:44,  back:true,  step:'4 of 8', btn:'Continue',    ok:function(){ var v=document.getElementById('holiday-days').value; return v!==''&&+v>=0&&+v<365; } },
+  5: { pct:55,  back:true,  step:'5 of 8', btn:'Continue',    ok:function(){ var v=document.getElementById('umbrella-fee').value; return v!==''&&+v>=0; } },
+  6: { pct:66,  back:true,  step:'6 of 8', btn:'Continue',    ok:function(){ return ans.pension !== null; } },
+  7: { pct:72,  back:true,  step:'6 of 8', btn:'Continue',    ok:function(){ var v=document.getElementById('pension-pct').value; return v!==''&&+v>0&&+v<=100; } },
+  8: { pct:77,  back:true,  step:'7 of 8', btn:'Continue',    ok:function(){ return ans.employedElsewhere !== null; } },
   9: { pct:100, back:true,  step:'Done',   btn:'Recalculate', ok:function(){ return true; } },
   10: { pct:8,   back:true, step:'1 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-day-rate').value; return v!==''&&+v>0; } },
   11: { pct:18,  back:true, step:'2 of 9', btn:'Continue',    ok:function(){ return ans.ltdDaysPerWeek !== null; } },
   12: { pct:27,  back:true, step:'3 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-holiday-days').value; return v!==''&&+v>=0&&+v<365; } },
   13: { pct:36,  back:true, step:'4 of 9', btn:'Continue',    ok:function(){ return ans.numDirectors !== null; } },
-  14: { pct:45,  back:true, step:'5 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-salary').value; return v!==''&&+v>=0; } },
-  15: { pct:54,  back:true, step:'6 of 9', btn:'Continue',    ok:function(){ return ans.ltdEmployedElsewhere !== null; } },
-  16: { pct:function(){return +ans.numDirectors>1?92:63;}, back:true, step:'7 of 9', btn:'Continue', ok:function(){ return getExpTotal() >= 1; } },
-  17: { pct:72,  back:true, step:'8 of 9', btn:'Continue',    ok:function(){ return ans.ltdPension !== null; } },
-  18: { pct:82,  back:true, step:'8 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-pension-amount').value; return v!==''&&+v>0; } },
+  14: { pct:40,  back:true, step:'5 of 10', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-salary').value; return v!==''&&+v>=0; } },
+  15: { pct:50,  back:true, step:'6 of 10', btn:'Continue',    ok:function(){ return ans.ltdEmployedElsewhere !== null; } },
+  16: { pct:function(){return +ans.numDirectors>1?92:60;}, back:true, step:'7 of 10', btn:'Continue', ok:function(){ return getExpTotal() >= 1; } },
+  17: { pct:70,  back:true, step:'8 of 10', btn:'Continue',    ok:function(){ return ans.ltdPension !== null; } },
+  18: { pct:80,  back:true, step:'8 of 10', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-pension-amount').value; return v!==''&&+v>0; } },
   19: { pct:100, back:true, step:'Done',   btn:'Recalculate', ok:function(){ return true; } },
   20: { pct: function(){return loopPct(0);}, back:true, step: loopStep, btn:'Continue',
         ok: function(){ var el=document.getElementById('dir-name'); return !!(el&&el.value.trim()!==''); } },
@@ -1346,6 +1346,10 @@ var SCREENS = {
         ok: function(){ var d=ans.directors[dirLoop.current]; return !!(d&&d.pension!==null); } },
   25: { pct: function(){return loopPct(5);}, back:true, step: loopStep, btn:'Continue',
         ok: function(){ var el=document.getElementById('dir-pension-amount-loop'); return !!(el&&el.value!==''&&+el.value>0); } },
+  26: { pct:88,  back:true, step:'8 of 8',  btn:'Continue', ok:function(){ return ans.studentLoan !== null; } },
+  27: { pct:90,  back:true, step:'9 of 10', btn:'Continue', ok:function(){ return ans.studentLoan !== null; } },
+  28: { pct: function(){return loopPct(6);}, back:true, step: loopStep, btn:'Continue',
+        ok: function(){ var d=ans.directors[dirLoop.current]; return !!(d&&d.studentLoan!==null&&d.studentLoan!==undefined); } },
 };
 
 function getNextScreen(idx) {
