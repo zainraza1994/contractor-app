@@ -1851,6 +1851,84 @@ function calculateIR35() {
   };
 }
 
+function calculateIR35ForComparison(dayRate, workingDays) {
+  var annualGross    = dayRate * workingDays;
+  var umbrellaAnnual = 20 * 52;
+  var pot            = annualGross - umbrellaAnnual;
+  var employeeGross  = (pot + 750) / 1.155;
+  var employerNI     = Math.max(0, (employeeGross - 5000) * 0.15);
+  var levy           = employeeGross * 0.005;
+
+  var pa = 12570;
+  if (employeeGross > 100000) pa = Math.max(0, 12570 - Math.floor((employeeGross - 100000) / 2));
+
+  var taxable   = Math.max(0, employeeGross - pa);
+  var basicBand = Math.max(0, 50270 - pa);
+  var b1 = Math.min(taxable, basicBand);
+  var b2 = Math.min(Math.max(taxable - basicBand, 0), 74870);
+  var b3 = Math.max(taxable - (basicBand + 74870), 0);
+  var incomeTax = b1 * 0.20 + b2 * 0.40 + b3 * 0.45;
+
+  var employeeNI = 0;
+  if (employeeGross > 12570) {
+    employeeNI += Math.min(employeeGross - 12570, 37700) * 0.08;
+    if (employeeGross > 50270) employeeNI += (employeeGross - 50270) * 0.02;
+  }
+
+  var netAnnual  = employeeGross - incomeTax - employeeNI;
+  var netMonthly = netAnnual / 12;
+  var effRate    = annualGross > 0 ? (netAnnual / annualGross) * 100 : 0;
+  return { netAnnual: netAnnual, netMonthly: netMonthly, effRate: effRate };
+}
+
+function calculateLtdCoForComparison(dayRate, workingDays) {
+  var annualGross   = dayRate * workingDays;
+  var salary        = 12570;
+  var empNI         = Math.max(0, (salary - 5000) * 0.15);
+  var taxableProfit = annualGross - salary - empNI;
+
+  var corpTax = 0;
+  if (taxableProfit > 0) {
+    if (taxableProfit <= 50000) {
+      corpTax = taxableProfit * 0.19;
+    } else if (taxableProfit <= 250000) {
+      corpTax = taxableProfit * 0.25 - (250000 - taxableProfit) * (3 / 200);
+    } else {
+      corpTax = taxableProfit * 0.25;
+    }
+  }
+
+  var dividendsAvailable = Math.max(0, taxableProfit - corpTax);
+  var divReceived        = dividendsAvailable;
+  var totalIncome        = salary + divReceived;
+
+  var pa = 12570;
+  if (totalIncome > 100000) pa = Math.max(0, 12570 - Math.floor((totalIncome - 100000) / 2));
+
+  var taxableSalary  = Math.max(0, salary - pa);
+  var basicBandWidth = Math.max(0, 50270 - pa);
+  var salTax = Math.min(taxableSalary, basicBandWidth) * 0.20
+             + Math.min(Math.max(taxableSalary - basicBandWidth, 0), 74870) * 0.40
+             + Math.max(taxableSalary - basicBandWidth - 74870, 0) * 0.45;
+
+  var netSalary = salary - salTax;
+
+  var divs        = divReceived;
+  var divInBasic  = Math.max(0, Math.min(salary + divs, 50270)  - Math.max(salary, pa));
+  var divInHigher = Math.max(0, Math.min(salary + divs, 125140) - Math.max(salary, 50270));
+  var divInAdd    = Math.max(0, (salary + divs) - Math.max(salary, 125140));
+  var allow       = 500;
+  var txBasic     = Math.max(0, divInBasic  - allow); allow = Math.max(0, allow - divInBasic);
+  var txHigher    = Math.max(0, divInHigher - allow); allow = Math.max(0, allow - divInHigher);
+  var txAdd       = Math.max(0, divInAdd    - allow);
+  var divTax      = txBasic * 0.1075 + txHigher * 0.3575 + txAdd * 0.3935;
+
+  var netTakeHome = netSalary + divReceived - divTax;
+  var netMonthly  = netTakeHome / 12;
+  var effRate     = annualGross > 0 ? (netTakeHome / annualGross) * 100 : 0;
+  return { netAnnual: netTakeHome, netMonthly: netMonthly, effRate: effRate };
+}
+
 function renderOutput() {
   calcResult = calculateIR35();
   var r  = calcResult;
