@@ -1812,11 +1812,14 @@ function countUp() {
         { id:'o-ltd-dividends',     val:lr.dividendsAvailable,    neg:false },
       ];
       lr.directors.forEach(function(d, i) {
-        ITEMS.push({ id:'o-dir-'+i+'-gross-salary', val:d.salary,            neg:false });
-        ITEMS.push({ id:'o-dir-'+i+'-net-salary',   val:d.netSalary,         neg:false });
-        ITEMS.push({ id:'o-dir-'+i+'-divs-received',val:d.dividendsReceived, neg:false });
-        ITEMS.push({ id:'o-dir-'+i+'-div-tax',      val:d.divTax,            neg:true  });
-        ITEMS.push({ id:'o-dir-'+i+'-net',          val:d.netTakeHome,       neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-gross-salary', val:d.salary,                  neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-net-salary',   val:d.netSalary,               neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-divs-received',val:d.dividendsReceived,       neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-div-tax',      val:d.divTax,                  neg:true  });
+        ITEMS.push({ id:'o-dir-'+i+'-net',          val:d.netTakeHome,             neg:false });
+        if (d.studentLoanRepayment > 0) {
+          ITEMS.push({ id:'o-dir-'+i+'-student-loan', val:d.studentLoanRepayment,  neg:true  });
+        }
       });
       ITEMS.push({ id:'o-ltd-net-monthly', val:lr.netMonthly, neg:false });
       if (numDirs > 1) {
@@ -1904,7 +1907,8 @@ function calculateLtdCo() {
       salary:            +document.getElementById('ltd-salary').value || 0,
       employedElsewhere: ans.ltdEmployedElsewhere || 'no',
       pension:           ans.ltdPension || 'no',
-      pensionMonthly:    ans.ltdPension === 'yes' ? (+document.getElementById('ltd-pension-amount').value || 0) : 0
+      pensionMonthly:    ans.ltdPension === 'yes' ? (+document.getElementById('ltd-pension-amount').value || 0) : 0,
+      studentLoan:       ans.studentLoan || 'none'
     }];
   } else {
     directors = ans.directors.map(function(d) {
@@ -1914,7 +1918,8 @@ function calculateLtdCo() {
         salary:            +d.salary || 0,
         employedElsewhere: d.employedElsewhere || 'no',
         pension:           d.pension || 'no',
-        pensionMonthly:    d.pension === 'yes' ? (+d.pensionMonthly || 0) : 0
+        pensionMonthly:    d.pension === 'yes' ? (+d.pensionMonthly || 0) : 0,
+        studentLoan:       d.studentLoan || 'none'
       };
     });
   }
@@ -1979,17 +1984,20 @@ function calculateLtdCo() {
     var txAdd      = Math.max(0, divInAdd    - allow);
     var divTax     = txBasic * 0.1075 + txHigher * 0.3575 + txAdd * 0.3935;
 
+    var studentLoanRepayment = calcStudentLoan(d.studentLoan || 'none', d.salary + divReceived);
     return {
-      name:              d.name,
-      shareholding:      d.shareholding,
-      salary:            d.salary,
-      employedElsewhere: d.employedElsewhere,
-      dividendsReceived: divReceived,
-      incomeTax:         salTax,
-      employeeNI:        employeeNI,
-      netSalary:         netSalary,
-      divTax:            divTax,
-      netTakeHome:       netSalary + divReceived - divTax
+      name:                  d.name,
+      shareholding:          d.shareholding,
+      salary:                d.salary,
+      studentLoan:           d.studentLoan || 'none',
+      employedElsewhere:     d.employedElsewhere,
+      dividendsReceived:     divReceived,
+      incomeTax:             salTax,
+      employeeNI:            employeeNI,
+      netSalary:             netSalary,
+      divTax:                divTax,
+      studentLoanRepayment:  studentLoanRepayment,
+      netTakeHome:           netSalary + divReceived - divTax - studentLoanRepayment
     };
   });
 
@@ -2081,6 +2089,10 @@ function renderLtdOutput() {
           '<span class="out-row-val neg" id="o-dir-' + i + '-div-tax">-\xa30</span></div>' +
         '<div class="out-row out-row-total"><span class="out-row-lbl out-row-lbl-bold">Director Net Take-Home</span>' +
           '<span class="out-row-val pos lg" id="o-dir-' + i + '-net">\xa30</span></div>' +
+        (d.studentLoanRepayment > 0
+          ? '<div class="out-row"><span class="out-row-lbl">Student Loan Repayment</span>' +
+            '<span class="out-row-val neg" id="o-dir-' + i + '-student-loan">-\xa30</span></div>'
+          : '') +
         warning +
         '</div>';
     }).join('');
