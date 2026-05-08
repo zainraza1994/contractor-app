@@ -1180,8 +1180,25 @@ function onEnter(idx) {
     setTimeout(function(){ var el=document.getElementById('dir-name'); if(el) el.focus(); }, 340);
   }
   if (idx === 21) {
-    syncShareholding();
-    setTimeout(function(){ var el=document.getElementById('dir-shareholding'); if(el) el.focus(); }, 340);
+    var isLastDir = dirLoop.current === +ans.numDirectors - 1;
+    var shEl = document.getElementById('dir-shareholding');
+    if (isLastDir && shEl) {
+      var remainder = 100 - allocatedSoFar();
+      shEl.value = remainder;
+      shEl.readOnly = true;
+      shEl.style.opacity = '0.6';
+      shEl.style.pointerEvents = 'none';
+      var hint = document.getElementById('dir-shareholding-hint');
+      if (hint) {
+        hint.textContent = 'Auto-calculated as the remaining share';
+        hint.style.color = 'var(--emerald)';
+      }
+      syncUI();
+    } else {
+      if (shEl) { shEl.readOnly = false; shEl.style.opacity = ''; shEl.style.pointerEvents = ''; }
+      syncShareholding();
+      setTimeout(function(){ var el=document.getElementById('dir-shareholding'); if(el) el.focus(); }, 340);
+    }
   }
   if (idx === 22) setTimeout(function(){ var el=document.getElementById('dir-salary-loop'); if(el) el.focus(); }, 340);
   if (idx === 25) setTimeout(function(){ var el=document.getElementById('dir-pension-amount-loop'); if(el) el.focus(); }, 340);
@@ -1321,9 +1338,10 @@ function allocatedSoFar() {
 }
 
 function syncShareholding() {
+  var shEl = document.getElementById('dir-shareholding');
+  if (shEl && shEl.readOnly) { syncUI(); return; }
   var hint = document.getElementById('dir-shareholding-hint');
   if (hint) {
-    var shEl = document.getElementById('dir-shareholding');
     var current = shEl ? (+shEl.value || 0) : 0;
     var allocated = allocatedSoFar() + current;
     hint.textContent = 'Allocated: ' + allocated + ' of 100%';

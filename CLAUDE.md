@@ -146,13 +146,15 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | Index | ID | Content |
 |---|---|---|
 | 20 | screen-20 | Director name (text input, id `dir-name`) |
-| 21 | screen-21 | Shareholding % (number input, id `dir-shareholding`; must total 100% across all directors) |
+| 21 | screen-21 | Shareholding % (number input, id `dir-shareholding`; must total 100% across all directors). **Last director only:** input is auto-filled with `100 − allocatedSoFar()`, locked read-only, hint reads "Auto-calculated as the remaining share" in green, Continue enabled immediately. |
 | 22 | screen-22 | Director salary (£ input, id `dir-salary-loop`, default £12,570) |
 | 23 | screen-23 | Employed elsewhere? Yes/No cards (data-group `dirEmployedElsewhere`) |
 | 24 | screen-24 | Company pension? Yes/No cards (data-group `dirPension`) |
 | 25 | screen-25 | Monthly pension amount (£ input, id `dir-pension-amount-loop`, conditional) |
 
 The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
+
+**Screen 21 — last-director auto-fill:** `onEnter(21)` checks `dirLoop.current === +ans.numDirectors − 1`. If true, it sets `dir-shareholding` to `100 − allocatedSoFar()`, marks the input `readOnly = true`, dims it (`opacity: 0.6`, `pointerEvents: none`), updates the hint in emerald, and calls `syncUI()`. `syncShareholding()` skips its normal hint update when the input is `readOnly`.
 
 ## Screen 16 — Expense categories
 Screen 16 is a single-column scrollable list of 9 input cards, all blank by default. The `EXP_CATS` array
@@ -262,3 +264,9 @@ The card label "Effective Tax Rate" uses this definition per the project spec.
 ## Disclaimer (always present on output screens)
 "This calculator provides estimates only and does not constitute financial or tax advice.
 Tax rules are complex and individual circumstances vary. Please consult a qualified accountant."
+
+## After every task — always do this without asking
+After completing any code change:
+1. Update this CLAUDE.md file if anything changed about how the app works, its screen map, navigation logic, calculation rules, or build status.
+2. Update README.md if it exists and the change is user-facing.
+3. Commit everything to git (index.html + any updated docs) with a clear commit message. Do not ask for confirmation — just do it.
