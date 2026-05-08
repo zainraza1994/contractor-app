@@ -162,6 +162,13 @@ html,body{
 .cards-num .card{min-height:64px;padding:14px 20px}
 .cards-num .c-title{font-size:20px;font-family:'DM Serif Display',serif}
 
+/* ── Student loan 2-column card grid ── */
+.cards-sl{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cards-sl .card{min-height:72px;padding:14px 12px;align-items:flex-start}
+.cards-sl .c-icon{display:none}
+.cards-sl .card.selected .c-icon{display:none}
+.sl-full{grid-column:span 2}
+
 /* ── Expense category grid (screen 16) ── */
 .exp-grid{display:grid;grid-template-columns:1fr;gap:10px}
 .exp-card{background:rgba(255,255,255,.07);border-radius:12px;padding:12px 14px}
