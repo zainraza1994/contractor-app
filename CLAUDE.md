@@ -17,7 +17,7 @@ Supports three scenarios:
 - Outside IR35 — Sole Trader
 - Outside IR35 — Limited Company (single or multiple directors/shareholders)
 
-For the Limited Company route, supports up to 10 directors with individual shareholding
+For the Limited Company route, supports up to 3 directors with individual shareholding
 percentages, salaries, and personal tax calculations. Outputs both per-director breakdowns
 and a combined total take-home across all directors.
 
@@ -81,24 +81,28 @@ Built in 6 stages:
 - [x] Stage 2: Inside IR35 route and calculations
 - [ ] Stage 3: Sole Trader route and calculations
 - [x] Stage 4: Limited Company, single director
-- [ ] Stage 5: Limited Company, multiple directors
+- [x] Stage 5: Limited Company, multiple directors (up to 3)
 - [ ] Stage 6: Comparison screen, PWA install, final polish
 
 ## Navigation architecture (important for future changes)
 The JavaScript uses a **history-stack navigation** — not a linear index. Key pieces:
 
-- `SCREENS` — object map (keys 0–19) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue
+- `SCREENS` — object map (keys 0–25) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–25 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
 - `history` — array stack; `onContinue()` pushes current index before advancing; `goBack()` pops and returns
 - `getNextScreen(idx)` — handles all routing branches:
   - Screen 1 → screen 10 if `ans.ir35 === 'outside'`, else screen 2 (Inside IR35)
   - Screen 6 → screen 7 if `ans.pension === 'yes'`, else screen 8
+  - Screen 13 → screen 14 if `ans.numDirectors === '1'`; otherwise calls `initDirLoop()` and → screen 20
+  - Screen 16 → screen 19 if `numDirectors > 1`; else screen 17/18/19 depending on pension
   - Screen 17 → screen 18 if `ans.ltdPension === 'yes'`, else screen 19
-- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension }`
+  - Screen 24 → screen 25 if current director's pension is 'yes'; otherwise `saveCurrentDirector()` then `nextDirectorOrExit()`
+  - Screen 25 → `saveCurrentDirector()` then `nextDirectorOrExit()` (returns 20 if more directors remain, 16 when all done)
+- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension, directors: [] }`
+- `dirLoop = { current: 0 }` — tracks which director (0-indexed) the loop is currently collecting data for
+- `goBack()` decrements `dirLoop.current` when navigating back to screen 20 from screen 24 or 25 (cross-director boundary)
 - Both output screens (9 and 19) use "Recalculate" which calls `resetAll()` and returns to screen 0
 
-**When adding the Sole Trader route:** add its screens (20+), update `getNextScreen(1)` to branch on `ans.ir35 === 'sole-trader'`, and add a new `ir35` card value for sole trader on screen 1.
-
-**When adding multiple directors (Stage 5):** screen 13 will gain additional cards (2–10 directors); `getNextScreen(13)` will branch to a director-detail loop for counts > 1.
+**When adding the Sole Trader route:** screens 20–25 are taken by the director loop. Add Sole Trader screens from 26+. Update `getNextScreen(1)` to branch on `ans.ir35 === 'sole-trader'`, and add a new `ir35` card value for sole trader on screen 1.
 
 ## Screen map — Inside IR35 (screens 0–9)
 | Index | ID | Content |
@@ -114,27 +118,122 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 8 | screen-8 | Employed elsewhere? Yes/No + warning banner if yes |
 | 9 | screen-9 | IR35 output — full calculated breakdown |
 
-## Screen map — Outside IR35 Ltd Co single director (screens 10–19)
+## Screen map — Outside IR35 Ltd Co (screens 10–25)
+
+### Shared entry (all director counts)
 | Index | ID | Content |
 |---|---|---|
 | 10 | screen-10 | Day rate (£ input, id `ltd-day-rate`) |
 | 11 | screen-11 | Days per week (tappable cards, data-group `ltdDaysPerWeek`) |
 | 12 | screen-12 | Days holiday per year (number input, id `ltd-holiday-days`) |
-| 13 | screen-13 | Number of directors (single card "1 director", data-group `numDirectors`) |
+| 13 | screen-13 | Number of directors (cards 1–3, data-group `numDirectors`) |
+
+### Single director only (screens 14–18, skipped for 2+ directors)
+| Index | ID | Content |
+|---|---|---|
 | 14 | screen-14 | Director salary (£ input, id `ltd-salary`, default £12,570) |
 | 15 | screen-15 | Employed elsewhere? Yes/No + warning banner (data-group `ltdEmployedElsewhere`) |
-| 16 | screen-16 | Monthly company expenses (£ input, id `ltd-expenses`, default £150) |
 | 17 | screen-17 | Company pension? Yes/No cards (data-group `ltdPension`) |
 | 18 | screen-18 | Monthly pension amount (£ input, id `ltd-pension-amount`, conditional) |
-| 19 | screen-19 | Ltd Co output — Company card + Director card + summary |
+
+### Shared expenses (all director counts)
+| Index | ID | Content |
+|---|---|---|
+| 16 | screen-16 | Monthly company expenses (£ input, id `ltd-expenses`, default £150) |
+| 19 | screen-19 | Ltd Co output — Company card + per-director cards + summary |
+
+### Director detail loop (screens 20–25, 2+ directors only — repeated once per director)
+| Index | ID | Content |
+|---|---|---|
+| 20 | screen-20 | Director name (text input, id `dir-name`) |
+| 21 | screen-21 | Shareholding % (number input, id `dir-shareholding`; must total 100% across all directors) |
+| 22 | screen-22 | Director salary (£ input, id `dir-salary-loop`, default £12,570) |
+| 23 | screen-23 | Employed elsewhere? Yes/No cards (data-group `dirEmployedElsewhere`) |
+| 24 | screen-24 | Company pension? Yes/No cards (data-group `dirPension`) |
+| 25 | screen-25 | Monthly pension amount (£ input, id `dir-pension-amount-loop`, conditional) |
+
+The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
 
 ## Ltd Co output layout (screen 19)
-- **Hero card** — Net Annual Take-Home (count-up animation)
-- **Company card** — Gross Revenue, Expenses, Director Salary, Pension (hidden if none), Corporation Tax, Dividends Available
-- **Director card** — Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home
-- **Net Monthly Take-Home** card
-- **Effective Tax Rate** card
+- **Hero card** — Net Annual Take-Home (count-up animation; combined total for 2+ directors)
+- **Company card** — Gross Revenue, Expenses, Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
+- **Director cards** — one per director, generated dynamically into `#director-cards-container`. Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
+- **Combined Total card** (`#o-combined-card`) — visible for 2+ directors only; shows Total Net Take-Home, Total Tax Paid, Combined Effective Rate
+- **Net Monthly Take-Home** card — visible for 1 director only
+- **Effective Tax Rate** card — visible for 1 director only
 - Disclaimer
+
+### Ltd Co calculation notes
+- **Employment Allowance:** £10,500 for 2+ directors; £0 for single director. Applied to Employer NI before deducting from taxable profit.
+- **Employer NI per director:** `max(0, salary − £5,000) × 15%`. Summed across all directors, then employment allowance subtracted.
+- **Dividends:** each director receives `dividendsAvailable × (shareholding / 100)`.
+- **PA tapering** applies per director based on their individual `salary + dividendsReceived`.
+- **Effective rate** = `totalTaxPaid / annualGross × 100` where `totalTaxPaid = annualGross − totalNetTakeHome`.
+
+## IR35 calculation logic — critical, do not change without explicit instruction
+
+The IR35 gross salary is back-calculated from the available pot. Never calculate Employer NI
+or the Apprenticeship Levy on the gross contract value (annualGross) — they must come out of
+the pot and be derived from the gross salary.
+
+### Step-by-step formula
+
+1. `workingDays = (52 × daysPerWeek) − holidayDays`
+2. `annualGross = dayRate × workingDays` (gross contract value)
+3. `umbrellaAnnual = umbrellaWeekly × 52`
+4. `pot = annualGross − umbrellaAnnual` (what the umbrella passes through)
+5. `grossSalary = (pot + 750) / 1.155`
+   - Derived by rearranging: pot = grossSalary × 1.155 − 750
+   - Where 1.155 = 1 + 0.15 (Employer NI) + 0.005 (Levy), and 750 = 0.15 × £5,000 threshold
+6. `employerNI = max(0, (grossSalary − 5000) × 0.15)`
+7. `levy = grossSalary × 0.005`
+8. **Sense check must pass:** `grossSalary + employerNI + levy === pot`
+
+### Income tax — band widths adjust with the personal allowance
+
+The basic rate band width is not a fixed £37,700. It depends on the actual PA:
+
+```
+basicBand = max(0, 50270 − pa)          // £37,700 at standard PA; £50,270 when PA = 0
+b1 = min(taxable, basicBand)            // 20%
+b2 = min(max(taxable − basicBand, 0), 74870)   // 40%
+b3 = max(taxable − (basicBand + 74870), 0)     // 45%
+```
+
+This matters whenever gross salary exceeds £100,000, because the personal allowance tapers
+(−£1 per £2 over £100,000) and the 20% band widens accordingly. Hardcoding 37,700 produces
+a significant under-calculation of income tax for higher earners.
+
+### Personal allowance tapering
+
+```
+pa = 12570
+if grossSalary > 100000: pa = max(0, 12570 − floor((grossSalary − 100000) / 2))
+if grossSalary ≥ 125140: pa = 0
+```
+
+### Effective rate (output screen)
+
+Defined as: `netAnnual / annualGross × 100`
+This shows the percentage of gross contract value the contractor takes home (not a deduction %).
+The card label "Effective Tax Rate" uses this definition per the project spec.
+
+### Validation test case (£700/day, 5 days, 25 holidays, £20/wk umbrella)
+
+| Metric | Expected |
+|--------|----------|
+| Working days | 235 |
+| Gross contract value | £164,500 |
+| Umbrella fee | £1,040 |
+| Available pot | £163,460 |
+| Gross salary | ~£142,173 |
+| Employer NI | ~£20,576 |
+| Apprenticeship Levy | ~£711 |
+| Sense check (gross + NI + levy) | £163,460 ✓ |
+| Income tax | ~£47,667 |
+| Employee NI | ~£4,854 |
+| Net annual | ~£89,652 |
+| Effective rate | ~54.5% |
 
 ## Disclaimer (always present on output screens)
 "This calculator provides estimates only and does not constitute financial or tax advice.
