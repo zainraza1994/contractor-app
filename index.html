@@ -185,8 +185,9 @@ html,body{
 }
 #screen-16{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 160px)}
 /* ── Expense breakdown on output screen ── */
-.exp-breakdown{margin-top:5px}
-.exp-breakdown-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.45);padding:2px 0 2px 14px}
+.exp-breakdown{margin-top:5px;margin-bottom:8px}
+#director-cards-container{display:flex;flex-direction:column;gap:10px}
+.exp-breakdown-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(13,27,42,.45);padding:2px 0 2px 14px}
 
 /* ── Employed elsewhere warning ── */
 .emp-warning{
@@ -813,6 +814,12 @@ html,body{
 
   <div class="out-cards">
 
+    <div class="out-card" id="o-ltd-monthly-card">
+      <div class="o-lbl">Net Monthly Take-Home</div>
+      <div class="o-val pos" id="o-ltd-net-monthly">£0</div>
+      <div class="o-sub">take-home per month</div>
+    </div>
+
     <div class="out-card">
       <div class="o-lbl">Company</div>
       <div class="out-row">
@@ -862,12 +869,6 @@ html,body{
         <span class="out-row-lbl">Combined Effective Rate</span>
         <span class="out-row-val" id="o-combined-eff-rate" style="color:#0D1B2A">0%</span>
       </div>
-    </div>
-
-    <div class="out-card" id="o-ltd-monthly-card">
-      <div class="o-lbl">Net Monthly Take-Home</div>
-      <div class="o-val pos" id="o-ltd-net-monthly">£0</div>
-      <div class="o-sub">take-home per month</div>
     </div>
 
     <div class="out-card" id="o-ltd-eff-rate-card">
@@ -1488,11 +1489,10 @@ function countUp() {
         ITEMS.push({ id:'o-dir-'+i+'-div-tax',      val:d.divTax,            neg:true  });
         ITEMS.push({ id:'o-dir-'+i+'-net',          val:d.netTakeHome,       neg:false });
       });
+      ITEMS.push({ id:'o-ltd-net-monthly', val:lr.netMonthly, neg:false });
       if (numDirs > 1) {
         ITEMS.push({ id:'o-combined-net', val:lr.totalNetTakeHome, neg:false });
         ITEMS.push({ id:'o-combined-tax', val:lr.totalTaxPaid,     neg:true  });
-      } else {
-        ITEMS.push({ id:'o-ltd-net-monthly', val:lr.netMonthly, neg:false });
       }
     } else {
     if (!calcResult) return;
@@ -1762,7 +1762,7 @@ function renderLtdOutput() {
   }
 
   var monthlyCard = document.getElementById('o-ltd-monthly-card');
-  if (monthlyCard) monthlyCard.style.display = numDirs === 1 ? '' : 'none';
+  if (monthlyCard) monthlyCard.style.display = '';
   var effRateCard = document.getElementById('o-ltd-eff-rate-card');
   if (effRateCard) effRateCard.style.display = numDirs === 1 ? '' : 'none';
   if (numDirs === 1) {

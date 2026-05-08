@@ -178,11 +178,12 @@ Screen 16 is a single-column scrollable list of 9 input cards, all blank by defa
 - **Fixed total bar:** `#exp-total-lbl` lives *outside* all `.screen` divs (placed just before `#chrome-bot`) so it can use `position:fixed`. If it were inside a `.screen` (which has `will-change:transform`), fixed positioning would be relative to the screen element, not the viewport. `syncUI()` shows/hides it (`display:block`/`none`) based on whether the current screen is 16. `#screen-16` has extra `padding-bottom` (160px + safe area) to keep the last card clear of the fixed total bar.
 
 ## Ltd Co output layout (screen 19)
+Card order (top to bottom):
 - **Hero card** — Net Annual Take-Home (count-up animation; combined total for 2+ directors)
-- **Company card** — Gross Revenue, Expenses (with indented per-category breakdown beneath for non-zero categories, populated by `renderLtdOutput()` into `#o-ltd-expenses-breakdown`), Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
-- **Director cards** — one per director, generated dynamically into `#director-cards-container`. Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
+- **Net Monthly Take-Home card** (`#o-ltd-monthly-card`) — always visible (both 1 and 2+ directors); shows `totalNetTakeHome / 12`; first card in `.out-cards`, mirroring the Inside IR35 output layout
+- **Company card** — Gross Revenue, Expenses (with indented per-category breakdown beneath for non-zero categories, populated by `renderLtdOutput()` into `#o-ltd-expenses-breakdown`; breakdown text uses `rgba(13,27,42,.45)` — dark, not white), Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
+- **Director cards** — one per director, generated dynamically into `#director-cards-container` (which has `display:flex;flex-direction:column;gap:10px` to space cards correctly). Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
 - **Combined Total card** (`#o-combined-card`) — visible for 2+ directors only; shows Total Net Take-Home, Total Tax Paid, Combined Effective Rate
-- **Net Monthly Take-Home** card — visible for 1 director only
 - **Effective Tax Rate** card — visible for 1 director only
 - Disclaimer
 
