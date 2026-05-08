@@ -34,6 +34,15 @@ and a combined total take-home across all directors.
 - Class 4 NI (sole trader): 6% on £12,570–£50,270 / 2% above
 - Class 2 NI: voluntary only, do not include by default
 
+## Student loan repayment rates — 2026/27
+- Plan 1: 9% above £24,990
+- Plan 2: 9% above £27,295
+- Plan 4: 9% above £31,395
+- Plan 5: 9% above £25,000
+- Postgraduate Loan: 6% above £21,000
+- Income base: grossSalary for Inside IR35; salary + dividendsReceived per director for Ltd Co
+- Do not include student loan in the sense check or pot calculation — it is deducted after net salary is calculated
+
 ## Design rules — never change these
 - Background: deep navy #0D1B2A
 - Accent / CTAs / positive numbers: emerald green #00C48C
@@ -87,19 +96,21 @@ Built in 6 stages:
 ## Navigation architecture (important for future changes)
 The JavaScript uses a **history-stack navigation** — not a linear index. Key pieces:
 
-- `SCREENS` — object map (keys 0–25) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–25 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
+- `SCREENS` — object map (keys 0–28) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–28 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
 - `history` — array stack; `onContinue()` pushes current index before advancing; `goBack()` pops and returns
 - `getNextScreen(idx)` — handles all routing branches:
   - Screen 1 → screen 10 if `ans.ir35 === 'outside'`, else screen 2 (Inside IR35)
   - Screen 6 → screen 7 if `ans.pension === 'yes'`, else screen 8
+  - Screen 8 → screen 26 (student loan); screen 26 → screen 9
   - Screen 13 → screen 14 if `ans.numDirectors === '1'`; otherwise calls `initDirLoop()` and → screen 20
-  - Screen 16 → screen 19 if `numDirectors > 1`; else screen 17/18/19 depending on pension
-  - Screen 17 → screen 18 if `ans.ltdPension === 'yes'`, else screen 19
-  - Screen 24 → screen 25 if current director's pension is 'yes'; otherwise `saveCurrentDirector()` then `nextDirectorOrExit()`
-  - Screen 25 → `saveCurrentDirector()` then `nextDirectorOrExit()` (returns 20 if more directors remain, 16 when all done)
+  - Screen 16 → screen 17 for single director (pension yes/no) — this was previously broken and is now fixed
+  - Screen 17 → screen 18 if ltdPension='yes', else screen 27; screen 18 → screen 27; screen 27 → screen 19
+  - Screen 24 → screen 25 if current director's pension is 'yes'; otherwise screen 28
+  - Screen 25 → screen 28; screen 28 → `saveCurrentDirector()` then `nextDirectorOrExit()` (returns 20 if more directors remain, 16 when all done)
 - `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension, directors: [] }`
 - `dirLoop = { current: 0 }` — tracks which director (0-indexed) the loop is currently collecting data for
-- `goBack()` decrements `dirLoop.current` when navigating back to screen 20 from screen 24 or 25 (cross-director boundary)
+- `goBack()` decrements `dirLoop.current` when navigating back to screen 20 from screen 24, 25, **or 28** (cross-director boundary)
+- `loopPct(fieldIdx)` now uses 7 fields (0=name, 1=shareholding, 2=salary, 3=employed, 4=pension, 5=pension-amount, 6=student-loan)
 - Both output screens (9 and 19) use "Recalculate" which calls `resetAll()` and returns to screen 0
 
 **When adding the Sole Trader route:** screens 20–25 are taken by the director loop. Add Sole Trader screens from 26+. Update `getNextScreen(1)` to branch on `ans.ir35 === 'sole-trader'`, and add a new `ir35` card value for sole trader on screen 1.
@@ -115,8 +126,9 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 5 | screen-5 | Umbrella fee per week (£ input, default £20) |
 | 6 | screen-6 | Pension? Yes/No cards |
 | 7 | screen-7 | Pension % (conditional — only if pension=yes) |
-| 8 | screen-8 | Employed elsewhere? Yes/No + warning banner if yes |
-| 9 | screen-9 | IR35 output — full calculated breakdown |
+| 8  | screen-8  | Employed elsewhere? Yes/No + warning banner if yes |
+| 26 | screen-26 | Student loan? (6-card 2-col grid: No/Plan1/Plan2/Plan4/Plan5/Postgrad) |
+| 9  | screen-9  | IR35 output — full calculated breakdown |
 
 ## Screen map — Outside IR35 Ltd Co (screens 10–25)
 
@@ -128,13 +140,14 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 12 | screen-12 | Days holiday per year (number input, id `ltd-holiday-days`) |
 | 13 | screen-13 | Number of directors (cards 1–3, data-group `numDirectors`) |
 
-### Single director only (screens 14–18, skipped for 2+ directors)
+### Single director only (screens 14–18 + 27, skipped for 2+ directors)
 | Index | ID | Content |
 |---|---|---|
 | 14 | screen-14 | Director salary (£ input, id `ltd-salary`, default £12,570) |
 | 15 | screen-15 | Employed elsewhere? Yes/No + warning banner (data-group `ltdEmployedElsewhere`) |
 | 17 | screen-17 | Company pension? Yes/No cards (data-group `ltdPension`) |
 | 18 | screen-18 | Monthly pension amount (£ input, id `ltd-pension-amount`, conditional) |
+| 27 | screen-27 | Student loan? (6-card 2-col grid) |
 
 ### Shared expenses (all director counts)
 | Index | ID | Content |
@@ -142,7 +155,7 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 16 | screen-16 | Monthly company expenses — single-column scrollable list of 9 category inputs (see below) |
 | 19 | screen-19 | Ltd Co output — Company card + per-director cards + summary |
 
-### Director detail loop (screens 20–25, 2+ directors only — repeated once per director)
+### Director detail loop (screens 20–28, 2+ directors only — repeated once per director)
 | Index | ID | Content |
 |---|---|---|
 | 20 | screen-20 | Director name (text input, id `dir-name`) |
@@ -151,6 +164,7 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 23 | screen-23 | Employed elsewhere? Yes/No cards (data-group `dirEmployedElsewhere`) |
 | 24 | screen-24 | Company pension? Yes/No cards (data-group `dirPension`) |
 | 25 | screen-25 | Monthly pension amount (£ input, id `dir-pension-amount-loop`, conditional) |
+| 28 | screen-28 | Student loan? (6-card 2-col grid; data-group `dirStudentLoan`) |
 
 The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
 
