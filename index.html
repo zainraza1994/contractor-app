@@ -1093,6 +1093,16 @@ function onEnter(idx) {
   if (idx === 14) setTimeout(function(){ document.getElementById('ltd-salary').focus(); }, 340);
   if (idx === 16) setTimeout(function(){ document.getElementById('ltd-expenses').focus(); }, 340);
   if (idx === 18) setTimeout(function(){ document.getElementById('ltd-pension-amount').focus(); }, 340);
+  if (idx === 20) {
+    populateLoopScreens();
+    setTimeout(function(){ var el=document.getElementById('dir-name'); if(el) el.focus(); }, 340);
+  }
+  if (idx === 21) {
+    syncShareholding();
+    setTimeout(function(){ var el=document.getElementById('dir-shareholding'); if(el) el.focus(); }, 340);
+  }
+  if (idx === 22) setTimeout(function(){ var el=document.getElementById('dir-salary-loop'); if(el) el.focus(); }, 340);
+  if (idx === 25) setTimeout(function(){ var el=document.getElementById('dir-pension-amount-loop'); if(el) el.focus(); }, 340);
   if (idx === 19) {
     renderLtdOutput();
     resetLtdNums();
@@ -1127,19 +1137,26 @@ window.pickCard = function(el) {
     c.classList.remove('selected');
   });
   el.classList.add('selected');
-  ans[grp] = el.dataset.value;
+  if (grp === 'dirEmployedElsewhere') {
+    if (ans.directors[dirLoop.current]) ans.directors[dirLoop.current].employedElsewhere = el.dataset.value;
+  } else if (grp === 'dirPension') {
+    if (ans.directors[dirLoop.current]) ans.directors[dirLoop.current].pension = el.dataset.value;
+  } else {
+    ans[grp] = el.dataset.value;
+  }
   if (grp === 'employedElsewhere') {
-    document.getElementById('employed-warning').style.display =
-      el.dataset.value === 'yes' ? 'block' : 'none';
+    document.getElementById('employed-warning').style.display = el.dataset.value === 'yes' ? 'block' : 'none';
   }
   if (grp === 'ltdEmployedElsewhere') {
-    document.getElementById('ltd-employed-warning').style.display =
-      el.dataset.value === 'yes' ? 'block' : 'none';
+    document.getElementById('ltd-employed-warning').style.display = el.dataset.value === 'yes' ? 'block' : 'none';
+  }
+  if (grp === 'dirEmployedElsewhere') {
+    document.getElementById('dir-employed-warning').style.display = el.dataset.value === 'yes' ? 'block' : 'none';
   }
   syncUI();
   el.style.transform = 'scale(1.025)';
   setTimeout(function(){ el.style.transform = ''; }, 160);
-  var isEmpElsewhere = grp === 'employedElsewhere' || grp === 'ltdEmployedElsewhere';
+  var isEmpElsewhere = grp === 'employedElsewhere' || grp === 'ltdEmployedElsewhere' || grp === 'dirEmployedElsewhere';
   var autoAdvance = !isEmpElsewhere || el.dataset.value === 'no';
   if (autoAdvance) {
     setTimeout(function(){
@@ -1171,6 +1188,10 @@ addInputListeners('ltd-holiday-days');
 addInputListeners('ltd-salary');
 addInputListeners('ltd-expenses');
 addInputListeners('ltd-pension-amount');
+addInputListeners('dir-name');
+addInputListeners('dir-shareholding');
+addInputListeners('dir-salary-loop');
+addInputListeners('dir-pension-amount-loop');
 
 function syncUI() {
   var c = SCREENS[cur];
