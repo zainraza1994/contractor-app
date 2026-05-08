@@ -139,7 +139,7 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 ### Shared expenses (all director counts)
 | Index | ID | Content |
 |---|---|---|
-| 16 | screen-16 | Monthly company expenses — 2-column grid of 9 category inputs (see below) |
+| 16 | screen-16 | Monthly company expenses — single-column scrollable list of 9 category inputs (see below) |
 | 19 | screen-19 | Ltd Co output — Company card + per-director cards + summary |
 
 ### Director detail loop (screens 20–25, 2+ directors only — repeated once per director)
@@ -155,7 +155,7 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
 
 ## Screen 16 — Expense categories
-Screen 16 is a 2-column grid of 9 compact input cards, all blank by default. The `EXP_CATS` array
+Screen 16 is a single-column scrollable list of 9 input cards, all blank by default. The `EXP_CATS` array
 (defined at the top of the IIFE) is the single source of truth for IDs and labels:
 
 | Input ID | Label (output) | Card display |
@@ -174,7 +174,8 @@ Screen 16 is a 2-column grid of 9 compact input cards, all blank by default. The
 - `getExpTotal()` sums all 9 inputs; SCREENS[16].ok() requires total ≥ 1.
 - `calculateLtdCo()` reads expenses via `EXP_CATS` → stores both the total and an `expBreakdown` array in its return value.
 - **Do not add a default value to any expense input** — they are intentionally blank.
-- **Do not replace with a single input** — the categorised grid is the intended design.
+- **Do not replace with a single input** — the categorised list is the intended design.
+- **Fixed total bar:** `#exp-total-lbl` lives *outside* all `.screen` divs (placed just before `#chrome-bot`) so it can use `position:fixed`. If it were inside a `.screen` (which has `will-change:transform`), fixed positioning would be relative to the screen element, not the viewport. `syncUI()` shows/hides it (`display:block`/`none`) based on whether the current screen is 16. `#screen-16` has extra `padding-bottom` (160px + safe area) to keep the last card clear of the fixed total bar.
 
 ## Ltd Co output layout (screen 19)
 - **Hero card** — Net Annual Take-Home (count-up animation; combined total for 2+ directors)

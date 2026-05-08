@@ -163,9 +163,9 @@ html,body{
 .cards-num .c-title{font-size:20px;font-family:'DM Serif Display',serif}
 
 /* ── Expense category grid (screen 16) ── */
-.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
-.exp-card{background:rgba(255,255,255,.07);border-radius:12px;padding:8px 11px}
-.exp-lbl{font-size:10.5px;color:rgba(255,255,255,.5);letter-spacing:.02em;margin-bottom:5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.exp-card{background:rgba(255,255,255,.07);border-radius:12px;padding:12px 14px}
+.exp-lbl{font-size:13px;color:rgba(255,255,255,.5);letter-spacing:.02em;margin-bottom:6px;line-height:1.25}
 .exp-inp{display:flex;align-items:baseline;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:3px;transition:border-color 200ms}
 .exp-inp:focus-within{border-color:var(--emerald)}
 .exp-pfx{font-family:'DM Serif Display',serif;font-size:15px;color:rgba(255,255,255,.35);padding-right:2px}
@@ -173,7 +173,17 @@ html,body{
 .exp-num::placeholder{color:rgba(255,255,255,.18)}
 .exp-num::-webkit-outer-spin-button,.exp-num::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none}
 .exp-num[type=number]{-moz-appearance:textfield;appearance:textfield}
-.exp-total-line{text-align:center;font-size:15px;font-weight:600;color:var(--emerald);padding:4px 0 2px}
+.exp-total-line{
+  position:fixed;left:0;right:0;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 82px);
+  z-index:199;
+  background:var(--navy);
+  text-align:center;font-size:15px;font-weight:600;color:var(--emerald);
+  padding:10px 24px 8px;
+  border-top:1px solid rgba(255,255,255,.08);
+  display:none;
+}
+#screen-16{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 160px)}
 /* ── Expense breakdown on output screen ── */
 .exp-breakdown{margin-top:5px}
 .exp-breakdown-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.45);padding:2px 0 2px 14px}
@@ -747,7 +757,6 @@ html,body{
       <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-misc" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
     </div>
   </div>
-  <div class="exp-total-line" id="exp-total-lbl">Total: £0/month</div>
 </div>
 
 <!-- SCREEN 17 — Company pension -->
@@ -984,6 +993,9 @@ html,body{
       pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()">
   </div>
 </div>
+
+<!-- EXPENSES TOTAL (fixed bar, shown only on screen 16) -->
+<div class="exp-total-line" id="exp-total-lbl">Total: £0/month</div>
 
 <!-- BOTTOM CHROME -->
 <div id="chrome-bot">
@@ -1274,9 +1286,10 @@ function syncUI() {
   }
   mainBtn.textContent = c.btn;
   mainBtn.disabled = !c.ok();
-  if (cur === 16) {
-    var totEl = document.getElementById('exp-total-lbl');
-    if (totEl) totEl.textContent = 'Total: £' + Math.round(getExpTotal()).toLocaleString('en-GB') + '/month';
+  var totEl = document.getElementById('exp-total-lbl');
+  if (totEl) {
+    totEl.style.display = cur === 16 ? 'block' : 'none';
+    if (cur === 16) totEl.textContent = 'Total: £' + Math.round(getExpTotal()).toLocaleString('en-GB') + '/month';
   }
 }
 

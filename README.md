@@ -104,7 +104,7 @@ The **Effective Rate** shown on the output screen is `net annual ÷ gross contra
 | 13 | Number of directors (1, 2, or 3) |
 | 14 | Director salary — single director only (default £12,570) |
 | 15 | Employed elsewhere — single director only |
-| 16 | Monthly company expenses — 9 categorised inputs (accounting, travel, insurance, equipment, software, phone, food, other wages, misc) with live total |
+| 16 | Monthly company expenses — 9 categorised inputs in a single-column scrollable list (accounting, travel, insurance, equipment, software, phone, food, other wages, misc); live total bar and continue button fixed at the bottom |
 | 17 | Company pension yes/no — single director only |
 | 18 | Monthly pension amount — single director only (conditional) |
 | 19 | Output — Company card (with per-category expense breakdown) + per-director cards + combined total |
