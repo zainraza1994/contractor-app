@@ -1930,6 +1930,91 @@ function calculateLtdCoForComparison(dayRate, workingDays) {
   return { netAnnual: netTakeHome, netMonthly: netMonthly, effRate: effRate };
 }
 
+function buildComparisonScenarios() {
+  var origin = history.length > 0 ? history[history.length - 1] : null;
+  var scenarios = [];
+
+  if (origin === 9 && calcResult) {
+    scenarios.push({
+      name: 'Inside IR35',
+      subtitle: '',
+      netAnnual: calcResult.netAnnual,
+      netMonthly: calcResult.netMonthly,
+      effRate: calcResult.effRate
+    });
+    var dayRate1 = calcResult.workingDays > 0 ? calcResult.annualGross / calcResult.workingDays : 0;
+    var ltdEst = calculateLtdCoForComparison(dayRate1, calcResult.workingDays);
+    scenarios.push({
+      name: 'Ltd Co',
+      subtitle: 'Est. · 1 director, £12,570 salary',
+      netAnnual: ltdEst.netAnnual,
+      netMonthly: ltdEst.netMonthly,
+      effRate: ltdEst.effRate
+    });
+  } else if (origin === 19 && ltdCalcResult) {
+    var numDirs = +ans.numDirectors || 1;
+    var dirLabel = numDirs === 1 ? '1 director' : numDirs + ' directors';
+    scenarios.push({
+      name: 'Ltd Co · ' + dirLabel,
+      subtitle: '',
+      netAnnual: ltdCalcResult.totalNetTakeHome,
+      netMonthly: ltdCalcResult.netMonthly,
+      effRate: ltdCalcResult.totalNetTakeHome / ltdCalcResult.annualGross * 100
+    });
+    var dayRate2 = ltdCalcResult.workingDays > 0 ? ltdCalcResult.annualGross / ltdCalcResult.workingDays : 0;
+    var ir35Est = calculateIR35ForComparison(dayRate2, ltdCalcResult.workingDays);
+    scenarios.push({
+      name: 'Inside IR35',
+      subtitle: 'Est. · £20/wk umbrella',
+      netAnnual: ir35Est.netAnnual,
+      netMonthly: ir35Est.netMonthly,
+      effRate: ir35Est.effRate
+    });
+  }
+
+  return scenarios;
+}
+
+function renderComparisonCards(scenarios) {
+  var container = document.getElementById('comparison-cards');
+  if (!container) return;
+  if (!scenarios.length) {
+    container.innerHTML = '<p style="color:rgba(255,255,255,.5);text-align:center;padding:32px 0">No data to compare.</p>';
+    return;
+  }
+  var maxNet  = Math.max.apply(null, scenarios.map(function(s){ return s.netAnnual; }));
+  var allSame = scenarios.every(function(s){ return s.netAnnual === maxNet; });
+  container.innerHTML = scenarios.map(function(s) {
+    var isWinner = !allSame && s.netAnnual === maxNet;
+    return '<div class="out-card' + (isWinner ? ' comp-winner' : '') + '">' +
+      (isWinner ? '<div class="best-badge">Best value</div>' : '') +
+      '<div class="o-lbl">' + escHtml(s.name) + '</div>' +
+      (s.subtitle ? '<div style="font-size:12px;color:rgba(13,27,42,.4);margin-bottom:6px">' + escHtml(s.subtitle) + '</div>' : '') +
+      '<div class="o-val' + (isWinner ? ' pos' : '') + '">' +
+        '£' + Math.round(s.netAnnual).toLocaleString('en-GB') +
+      '</div>' +
+      '<div class="o-sub">net annual take-home</div>' +
+      '<div class="comp-row">' +
+        '<div class="comp-col">' +
+          '<div class="comp-col-lbl">Net Monthly</div>' +
+          '<div class="comp-col-val' + (isWinner ? ' pos' : '') + '">' +
+            '£' + Math.round(s.netMonthly).toLocaleString('en-GB') +
+          '</div>' +
+        '</div>' +
+        '<div class="comp-col">' +
+          '<div class="comp-col-lbl">Eff. Rate</div>' +
+          '<div class="comp-col-val">' + s.effRate.toFixed(1) + '%</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+window.goToComparison = function() {
+  history.push(cur);
+  goTo(29, 1);
+};
+
 function renderOutput() {
   calcResult = calculateIR35();
   var r  = calcResult;
