@@ -1020,6 +1020,21 @@ var EXP_CATS = [
   { id:'exp-misc',       label:'Miscellaneous' }
 ];
 
+var STUDENT_LOAN_PLANS = {
+  none:    { threshold: 0,     rate: 0    },
+  plan1:   { threshold: 24990, rate: 0.09 },
+  plan2:   { threshold: 27295, rate: 0.09 },
+  plan4:   { threshold: 31395, rate: 0.09 },
+  plan5:   { threshold: 25000, rate: 0.09 },
+  postgrad:{ threshold: 21000, rate: 0.06 }
+};
+
+function calcStudentLoan(plan, income) {
+  var p = STUDENT_LOAN_PLANS[plan] || STUDENT_LOAN_PLANS.none;
+  if (!p.rate) return 0;
+  return Math.max(0, (income - p.threshold) * p.rate);
+}
+
 function getExpTotal() {
   return EXP_CATS.reduce(function(s, c) {
     var el = document.getElementById(c.id);
@@ -1031,7 +1046,7 @@ var cur = 0, busy = false;
 var history = [];
 var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
             ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null,
-            directors: [] };
+            studentLoan: null, directors: [] };
 var ltdCalcResult = null;
 var dirLoop = { current: 0 };
 
@@ -1324,7 +1339,8 @@ function initDirLoop() {
       salary: 12570,
       employedElsewhere: null,
       pension: null,
-      pensionMonthly: 0
+      pensionMonthly: 0,
+      studentLoan: null
     });
   }
 }
@@ -1792,7 +1808,7 @@ function renderLtdOutput() {
 function resetAll() {
   ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
           ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null,
-          directors: [] };
+          studentLoan: null, directors: [] };
   dirLoop = { current: 0 };
   var dirContainer = document.getElementById('director-cards-container');
   if (dirContainer) dirContainer.innerHTML = '';
