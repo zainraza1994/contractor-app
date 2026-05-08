@@ -1653,6 +1653,12 @@ window.pickCard = function(el) {
 
 window.syncUI = syncUI;
 
+window.dismissPWABanner = function() {
+  localStorage.setItem('pwa-dismissed', '1');
+  var banner = document.getElementById('pwa-banner');
+  if (banner) banner.style.display = 'none';
+};
+
 function addInputListeners(id) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -1693,6 +1699,13 @@ function syncUI() {
   if (totEl) {
     totEl.style.display = cur === 16 ? 'block' : 'none';
     if (cur === 16) totEl.textContent = 'Total: £' + Math.round(getExpTotal()).toLocaleString('en-GB') + '/month';
+  }
+  var pwaBanner = document.getElementById('pwa-banner');
+  if (pwaBanner) {
+    var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var notInstalled = !navigator.standalone;
+    var notDismissed = !localStorage.getItem('pwa-dismissed');
+    pwaBanner.style.display = (cur === 0 && isIOS && notInstalled && notDismissed) ? 'flex' : 'none';
   }
 }
 
@@ -2400,6 +2413,32 @@ function resetAll() {
   if (lew) lew.style.display = 'none';
   [].forEach.call(document.querySelectorAll('.card'), function(c){ c.classList.remove('selected'); });
 }
+
+/* ── PWA: inline manifest and service worker ── */
+(function() {
+  var iconSvg = "data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='180' height='180' rx='40' fill='%230D1B2A'/%3E%3Cpath d='M90 24L40 48V90C40 128 63 158 90 163C117 158 140 128 140 90V48L90 24Z' fill='%2300C48C'/%3E%3Cpath d='M68 90L80 102L112 70' stroke='%230D1B2A' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3C%2Fsvg%3E";
+  var manifestObj = {
+    name: 'Contractor Calculator',
+    short_name: 'Contractor Calc',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#0D1B2A',
+    theme_color: '#0D1B2A',
+    icons: [{ src: iconSvg, sizes: 'any', type: 'image/svg+xml' }]
+  };
+  var manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+  var manifestURL  = URL.createObjectURL(manifestBlob);
+  var manifestLink = document.createElement('link');
+  manifestLink.rel  = 'manifest';
+  manifestLink.href = manifestURL;
+  document.head.appendChild(manifestLink);
+
+  if ('serviceWorker' in navigator) {
+    var swCode = "self.addEventListener('fetch', function(){});";
+    var swBlob = new Blob([swCode], { type: 'text/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function(){});
+  }
+}());
 
 }());
 </script>
