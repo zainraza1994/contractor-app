@@ -1381,25 +1381,34 @@ function resetNums() {
 
 function countUp() {
   var ITEMS;
-  if (cur === 19) {
-    if (!ltdCalcResult) return;
-    var lr = ltdCalcResult;
-    ITEMS = [
-      { id:'o-ltd-net-annual',    val:lr.netAnnual,             neg:false },
-      { id:'o-ltd-gross',         val:lr.annualGross,           neg:false },
-      { id:'o-ltd-expenses-out',  val:lr.annualExpenses,        neg:true  },
-      { id:'o-ltd-salary-out',    val:lr.directorSalary,        neg:true  },
-      { id:'o-ltd-pension-corp',  val:lr.annualPension,         neg:true  },
-      { id:'o-ltd-corp-tax',      val:lr.corporationTax,        neg:true  },
-      { id:'o-ltd-dividends',     val:lr.dividendsAvailable,    neg:false },
-      { id:'o-ltd-gross-salary',  val:lr.directorSalary,        neg:false },
-      { id:'o-ltd-net-salary',    val:lr.netSalary,             neg:false },
-      { id:'o-ltd-divs-received', val:lr.dividendsAvailable,    neg:false },
-      { id:'o-ltd-div-tax',       val:lr.divTax,                neg:true  },
-      { id:'o-ltd-director-net',  val:lr.netAnnual,             neg:false },
-      { id:'o-ltd-net-monthly',   val:lr.netMonthly,            neg:false },
-    ];
-  } else {
+    if (cur === 19) {
+      if (!ltdCalcResult) return;
+      var lr = ltdCalcResult;
+      var numDirs = +ans.numDirectors || 1;
+      ITEMS = [
+        { id:'o-ltd-net-annual',    val:lr.totalNetTakeHome,     neg:false },
+        { id:'o-ltd-gross',         val:lr.annualGross,           neg:false },
+        { id:'o-ltd-expenses-out',  val:lr.annualExpenses,        neg:true  },
+        { id:'o-ltd-salary-out',    val:lr.totalSalaries,         neg:true  },
+        { id:'o-ltd-pension-corp',  val:lr.totalPensions,         neg:true  },
+        { id:'o-ltd-employer-ni',   val:lr.netEmployerNI,         neg:true  },
+        { id:'o-ltd-corp-tax',      val:lr.corporationTax,        neg:true  },
+        { id:'o-ltd-dividends',     val:lr.dividendsAvailable,    neg:false },
+      ];
+      lr.directors.forEach(function(d, i) {
+        ITEMS.push({ id:'o-dir-'+i+'-gross-salary', val:d.salary,            neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-net-salary',   val:d.netSalary,         neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-divs-received',val:d.dividendsReceived, neg:false });
+        ITEMS.push({ id:'o-dir-'+i+'-div-tax',      val:d.divTax,            neg:true  });
+        ITEMS.push({ id:'o-dir-'+i+'-net',          val:d.netTakeHome,       neg:false });
+      });
+      if (numDirs > 1) {
+        ITEMS.push({ id:'o-combined-net', val:lr.totalNetTakeHome, neg:false });
+        ITEMS.push({ id:'o-combined-tax', val:lr.totalTaxPaid,     neg:true  });
+      } else {
+        ITEMS.push({ id:'o-ltd-net-monthly', val:lr.netMonthly, neg:false });
+      }
+    } else {
     if (!calcResult) return;
     var r = calcResult;
     ITEMS = [
@@ -1427,6 +1436,8 @@ function countUp() {
       if (item.id === 'o-pension' && prow && prow.style.display === 'none') return;
       var ltdPRow = document.getElementById('o-ltd-pension-row');
       if (item.id === 'o-ltd-pension-corp' && ltdPRow && ltdPRow.style.display === 'none') return;
+      var eniRow = document.getElementById('o-ltd-employer-ni-row');
+      if (item.id === 'o-ltd-employer-ni' && eniRow && eniRow.style.display === 'none') return;
       el.textContent = (item.neg?'-':'')+'£'+Math.round(e*item.val).toLocaleString('en-GB');
     });
     if (p < 1) requestAnimationFrame(frame);
@@ -1584,28 +1595,86 @@ function calculateLtdCo() {
 
 function resetLtdNums() {
   ['o-ltd-net-annual','o-ltd-gross','o-ltd-expenses-out','o-ltd-salary-out',
-   'o-ltd-pension-corp','o-ltd-corp-tax','o-ltd-dividends',
-   'o-ltd-gross-salary','o-ltd-net-salary','o-ltd-divs-received',
-   'o-ltd-div-tax','o-ltd-director-net','o-ltd-net-monthly'].forEach(function(id){
+   'o-ltd-pension-corp','o-ltd-employer-ni','o-ltd-corp-tax','o-ltd-dividends',
+   'o-ltd-net-monthly','o-combined-net','o-combined-tax'].forEach(function(id){
     var el = document.getElementById(id);
-    if (el) el.textContent = '£0';
+    if (el) el.textContent = '\xa30';
   });
 }
 
 function renderLtdOutput() {
   ltdCalcResult = calculateLtdCo();
   var r = ltdCalcResult;
+  var numDirs = +ans.numDirectors || 1;
+
   var daysSub = document.getElementById('o-ltd-days-sub');
   if (daysSub) daysSub.textContent = r.workingDays + ' days × £' + Math.round(r.ltdDayRate).toLocaleString('en-GB');
+
+  var salLbl = document.getElementById('o-ltd-salary-lbl');
+  if (salLbl) salLbl.textContent = numDirs === 1 ? 'Director Salary' : 'Total Salaries';
+  var penLbl = document.getElementById('o-ltd-pension-lbl');
+  if (penLbl) penLbl.textContent = numDirs === 1 ? 'Pension' : 'Total Pensions';
+
   var pensionRow = document.getElementById('o-ltd-pension-row');
-  if (pensionRow) pensionRow.style.display = ans.ltdPension === 'yes' ? '' : 'none';
-  var effEl = document.getElementById('o-ltd-eff-rate');
-  if (effEl) effEl.textContent = r.effRate.toFixed(1) + '%';
+  if (pensionRow) {
+    var hasPension = numDirs === 1 ? ans.ltdPension === 'yes' : r.totalPensions > 0;
+    pensionRow.style.display = hasPension ? '' : 'none';
+  }
+  var eniRow = document.getElementById('o-ltd-employer-ni-row');
+  if (eniRow) eniRow.style.display = r.netEmployerNI > 0 ? '' : 'none';
+
+  var container = document.getElementById('director-cards-container');
+  if (container) {
+    container.innerHTML = r.directors.map(function(d, i) {
+      var header = numDirs === 1 ? 'Director' : (d.name + ' \xb7 ' + d.shareholding + '%');
+      var warning = d.employedElsewhere === 'yes'
+        ? '<div class="emp-warning" style="margin-top:12px"><p>⚠️ Employed elsewhere — figures may vary</p></div>'
+        : '';
+      return '<div class="out-card">' +
+        '<div class="o-lbl">' + header + '</div>' +
+        '<div class="salary-split">' +
+          '<div class="salary-col"><div class="salary-col-lbl">Gross Salary</div>' +
+          '<div class="salary-col-val" id="o-dir-' + i + '-gross-salary">\xa30</div></div>' +
+          '<div class="salary-col"><div class="salary-col-lbl">Net Salary</div>' +
+          '<div class="salary-col-val pos" id="o-dir-' + i + '-net-salary">\xa30</div></div>' +
+        '</div>' +
+        '<div class="out-row"><span class="out-row-lbl">Dividends Received</span>' +
+          '<span class="out-row-val pos" id="o-dir-' + i + '-divs-received">\xa30</span></div>' +
+        '<div class="out-row"><span class="out-row-lbl">Dividend Tax</span>' +
+          '<span class="out-row-val neg" id="o-dir-' + i + '-div-tax">-\xa30</span></div>' +
+        '<div class="out-row out-row-total"><span class="out-row-lbl out-row-lbl-bold">Director Net Take-Home</span>' +
+          '<span class="out-row-val pos lg" id="o-dir-' + i + '-net">\xa30</span></div>' +
+        warning +
+        '</div>';
+    }).join('');
+  }
+
+  var combinedCard = document.getElementById('o-combined-card');
+  if (combinedCard) combinedCard.style.display = numDirs > 1 ? '' : 'none';
+  if (numDirs > 1) {
+    var ceff = document.getElementById('o-combined-eff-rate');
+    if (ceff) ceff.textContent = r.effRate.toFixed(1) + '%';
+  }
+
+  var monthlyCard = document.getElementById('o-ltd-monthly-card');
+  if (monthlyCard) monthlyCard.style.display = numDirs === 1 ? '' : 'none';
+  var effRateCard = document.getElementById('o-ltd-eff-rate-card');
+  if (effRateCard) effRateCard.style.display = numDirs === 1 ? '' : 'none';
+  if (numDirs === 1) {
+    var effEl = document.getElementById('o-ltd-eff-rate');
+    if (effEl) effEl.textContent = r.effRate.toFixed(1) + '%';
+  }
 }
 
 function resetAll() {
   ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
-          ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null };
+          ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null,
+          directors: [] };
+  dirLoop = { current: 0 };
+  var dirContainer = document.getElementById('director-cards-container');
+  if (dirContainer) dirContainer.innerHTML = '';
+  var combinedCard = document.getElementById('o-combined-card');
+  if (combinedCard) combinedCard.style.display = 'none';
   history = []; calcResult = null; ltdCalcResult = null;
   ['day-rate','holiday-days','pension-pct','ltd-day-rate','ltd-holiday-days','ltd-pension-amount'].forEach(function(id){
     var el = document.getElementById(id);
