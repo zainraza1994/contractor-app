@@ -162,6 +162,22 @@ html,body{
 .cards-num .card{min-height:64px;padding:14px 20px}
 .cards-num .c-title{font-size:20px;font-family:'DM Serif Display',serif}
 
+/* ── Expense category grid (screen 16) ── */
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.exp-card{background:rgba(255,255,255,.07);border-radius:12px;padding:8px 11px}
+.exp-lbl{font-size:10.5px;color:rgba(255,255,255,.5);letter-spacing:.02em;margin-bottom:5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-inp{display:flex;align-items:baseline;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:3px;transition:border-color 200ms}
+.exp-inp:focus-within{border-color:var(--emerald)}
+.exp-pfx{font-family:'DM Serif Display',serif;font-size:15px;color:rgba(255,255,255,.35);padding-right:2px}
+.exp-num{flex:1;background:none;border:none;outline:none;font-family:'DM Serif Display',serif;font-size:17px;color:var(--white);caret-color:var(--emerald);min-width:0}
+.exp-num::placeholder{color:rgba(255,255,255,.18)}
+.exp-num::-webkit-outer-spin-button,.exp-num::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none}
+.exp-num[type=number]{-moz-appearance:textfield;appearance:textfield}
+.exp-total-line{text-align:center;font-size:15px;font-weight:600;color:var(--emerald);padding:4px 0 2px}
+/* ── Expense breakdown on output screen ── */
+.exp-breakdown{margin-top:5px}
+.exp-breakdown-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.45);padding:2px 0 2px 14px}
+
 /* ── Employed elsewhere warning ── */
 .emp-warning{
   display:none;margin-top:16px;
@@ -688,17 +704,50 @@ html,body{
   </div>
 </div>
 
-<!-- SCREEN 16 — Monthly company expenses -->
+<!-- SCREEN 16 — Monthly company expenses (categorised) -->
 <div class="screen" id="screen-16">
   <div class="lbl">Company Expenses</div>
-  <h2 class="q-h">What are the monthly company expenses?</h2>
-  <p class="q-s">Accountancy, phone, software, travel</p>
-  <div class="inp-row">
-    <span class="inp-pfx">£</span>
-    <input class="num" id="ltd-expenses" type="number" inputmode="numeric"
-      pattern="[0-9]*" placeholder="0" autocomplete="off"
-      value="150" oninput="syncUI()">
+  <h2 class="q-h">What are your monthly company expenses?</h2>
+  <p class="q-s" style="margin-bottom:14px">Enter amounts for any categories that apply — leave the rest blank</p>
+  <div class="exp-grid">
+    <div class="exp-card">
+      <div class="exp-lbl">Accounting fees</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-accounting" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Travel</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-travel" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Insurance</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-insurance" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Equipment</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-equipment" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Software &amp; subs</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-software" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Phone &amp; comms</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-phone" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Food &amp; entertain</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-food" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Other wages</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-wages" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
+    <div class="exp-card">
+      <div class="exp-lbl">Miscellaneous</div>
+      <div class="exp-inp"><span class="exp-pfx">£</span><input class="exp-num" id="exp-misc" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" oninput="syncUI()"></div>
+    </div>
   </div>
+  <div class="exp-total-line" id="exp-total-lbl">Total: £0/month</div>
 </div>
 
 <!-- SCREEN 17 — Company pension -->
@@ -765,6 +814,7 @@ html,body{
         <span class="out-row-lbl">Expenses</span>
         <span class="out-row-val neg" id="o-ltd-expenses-out">-£0</span>
       </div>
+      <div class="exp-breakdown" id="o-ltd-expenses-breakdown"></div>
       <div class="out-row">
         <span class="out-row-lbl" id="o-ltd-salary-lbl">Director Salary</span>
         <span class="out-row-val neg" id="o-ltd-salary-out">-£0</span>
@@ -945,6 +995,25 @@ html,body{
 (function(){
 'use strict';
 
+var EXP_CATS = [
+  { id:'exp-accounting', label:'Accounting fees' },
+  { id:'exp-travel',     label:'Travel' },
+  { id:'exp-insurance',  label:'Insurance' },
+  { id:'exp-equipment',  label:'Equipment' },
+  { id:'exp-software',   label:'Software & subscriptions' },
+  { id:'exp-phone',      label:'Phone & communications' },
+  { id:'exp-food',       label:'Food & entertainment' },
+  { id:'exp-wages',      label:'Other wages' },
+  { id:'exp-misc',       label:'Miscellaneous' }
+];
+
+function getExpTotal() {
+  return EXP_CATS.reduce(function(s, c) {
+    var el = document.getElementById(c.id);
+    return s + (el ? +el.value || 0 : 0);
+  }, 0);
+}
+
 var cur = 0, busy = false;
 var history = [];
 var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
@@ -985,7 +1054,7 @@ var SCREENS = {
   13: { pct:36,  back:true, step:'4 of 9', btn:'Continue',    ok:function(){ return ans.numDirectors !== null; } },
   14: { pct:45,  back:true, step:'5 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-salary').value; return v!==''&&+v>=0; } },
   15: { pct:54,  back:true, step:'6 of 9', btn:'Continue',    ok:function(){ return ans.ltdEmployedElsewhere !== null; } },
-  16: { pct:function(){return +ans.numDirectors>1?92:63;}, back:true, step:'7 of 9', btn:'Continue', ok:function(){ var v=document.getElementById('ltd-expenses').value; return v!==''&&+v>=0; } },
+  16: { pct:function(){return +ans.numDirectors>1?92:63;}, back:true, step:'7 of 9', btn:'Continue', ok:function(){ return getExpTotal() >= 1; } },
   17: { pct:72,  back:true, step:'8 of 9', btn:'Continue',    ok:function(){ return ans.ltdPension !== null; } },
   18: { pct:82,  back:true, step:'8 of 9', btn:'Continue',    ok:function(){ var v=document.getElementById('ltd-pension-amount').value; return v!==''&&+v>0; } },
   19: { pct:100, back:true, step:'Done',   btn:'Recalculate', ok:function(){ return true; } },
@@ -1091,7 +1160,7 @@ function onEnter(idx) {
   if (idx === 10) setTimeout(function(){ document.getElementById('ltd-day-rate').focus(); }, 340);
   if (idx === 12) setTimeout(function(){ document.getElementById('ltd-holiday-days').focus(); }, 340);
   if (idx === 14) setTimeout(function(){ document.getElementById('ltd-salary').focus(); }, 340);
-  if (idx === 16) setTimeout(function(){ document.getElementById('ltd-expenses').focus(); }, 340);
+  if (idx === 16) setTimeout(function(){ var el=document.getElementById('exp-accounting'); if(el) el.focus(); }, 340);
   if (idx === 18) setTimeout(function(){ document.getElementById('ltd-pension-amount').focus(); }, 340);
   if (idx === 20) {
     populateLoopScreens();
@@ -1186,7 +1255,7 @@ addInputListeners('pension-pct');
 addInputListeners('ltd-day-rate');
 addInputListeners('ltd-holiday-days');
 addInputListeners('ltd-salary');
-addInputListeners('ltd-expenses');
+EXP_CATS.forEach(function(c){ addInputListeners(c.id); });
 addInputListeners('ltd-pension-amount');
 addInputListeners('dir-name');
 addInputListeners('dir-shareholding');
@@ -1205,6 +1274,10 @@ function syncUI() {
   }
   mainBtn.textContent = c.btn;
   mainBtn.disabled = !c.ok();
+  if (cur === 16) {
+    var totEl = document.getElementById('exp-total-lbl');
+    if (totEl) totEl.textContent = 'Total: £' + Math.round(getExpTotal()).toLocaleString('en-GB') + '/month';
+  }
 }
 
 /* ── Director loop helpers ── */
@@ -1465,8 +1538,14 @@ function calculateLtdCo() {
   var ltdDayRate         = +document.getElementById('ltd-day-rate').value || 0;
   var ltdDaysPerWeek     = +ans.ltdDaysPerWeek || 0;
   var ltdHolidayDays     = +document.getElementById('ltd-holiday-days').value || 0;
-  var ltdExpensesMonthly = +document.getElementById('ltd-expenses').value || 0;
   var numDirs            = +ans.numDirectors || 1;
+
+  var expBreakdown = EXP_CATS.map(function(c) {
+    var el = document.getElementById(c.id);
+    var monthly = el ? +el.value || 0 : 0;
+    return { label: c.label, monthly: monthly, annual: monthly * 12 };
+  });
+  var ltdExpensesMonthly = expBreakdown.reduce(function(s, b) { return s + b.monthly; }, 0);
 
   var workingDays    = 52 * ltdDaysPerWeek - ltdHolidayDays;
   var annualGross    = ltdDayRate * workingDays;
@@ -1579,6 +1658,7 @@ function calculateLtdCo() {
     workingDays:        workingDays,
     annualGross:        annualGross,
     annualExpenses:     annualExpenses,
+    expBreakdown:       expBreakdown,
     totalSalaries:      totalSalaries,
     totalPensions:      totalPensions,
     netEmployerNI:      netEmployerNI,
@@ -1613,6 +1693,14 @@ function renderLtdOutput() {
 
   var daysSub = document.getElementById('o-ltd-days-sub');
   if (daysSub) daysSub.textContent = r.workingDays + ' days × £' + Math.round(r.ltdDayRate).toLocaleString('en-GB');
+
+  var breakdown = document.getElementById('o-ltd-expenses-breakdown');
+  if (breakdown) {
+    var items = r.expBreakdown.filter(function(b) { return b.annual > 0; });
+    breakdown.innerHTML = items.map(function(b) {
+      return '<div class="exp-breakdown-row"><span>' + escHtml(b.label) + '</span><span>-£' + Math.round(b.annual).toLocaleString('en-GB') + '</span></div>';
+    }).join('');
+  }
 
   var salLbl = document.getElementById('o-ltd-salary-lbl');
   if (salLbl) salLbl.textContent = numDirs === 1 ? 'Director Salary' : 'Total Salaries';
@@ -1688,8 +1776,10 @@ function resetAll() {
   if (uf) uf.value = '20';
   var ls = document.getElementById('ltd-salary');
   if (ls) ls.value = '12570';
-  var le = document.getElementById('ltd-expenses');
-  if (le) le.value = '150';
+  EXP_CATS.forEach(function(c) {
+    var el = document.getElementById(c.id);
+    if (el) el.value = '';
+  });
   var ew = document.getElementById('employed-warning');
   if (ew) ew.style.display = 'none';
   var lew = document.getElementById('ltd-employed-warning');
