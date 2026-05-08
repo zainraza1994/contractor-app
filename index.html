@@ -1742,17 +1742,18 @@ function calculateIR35() {
     if (employeeGross > 50270) employeeNI += (employeeGross - 50270) * 0.02;
   }
 
-  var pension    = employeeGross * (pensionPct / 100);
-  var netAnnual  = employeeGross - incomeTax - employeeNI - pension;
-  var netMonthly = netAnnual / 12;
-  var totalDeds  = umbrellaAnnual + employerNI + levy + incomeTax + employeeNI + pension;
+  var pension              = employeeGross * (pensionPct / 100);
+  var studentLoanRepayment = calcStudentLoan(ans.studentLoan || 'none', employeeGross);
+  var netAnnual            = employeeGross - incomeTax - employeeNI - pension - studentLoanRepayment;
+  var netMonthly           = netAnnual / 12;
   // Spec: "Effective rate = Net ÷ Gross Contract Value × 100"
-  var effRate    = annualGross > 0 ? (netAnnual / annualGross) * 100 : 0;
+  var effRate              = annualGross > 0 ? (netAnnual / annualGross) * 100 : 0;
 
   return {
     annualGross:annualGross, workingDays:workingDays, umbrellaAnnual:umbrellaAnnual,
     employerNI:employerNI, levy:levy, employeeGross:employeeGross,
     incomeTax:incomeTax, employeeNI:employeeNI, pension:pension,
+    studentLoanRepayment:studentLoanRepayment,
     netAnnual:netAnnual, netMonthly:netMonthly, effRate:effRate
   };
 }
@@ -1771,6 +1772,16 @@ function renderOutput() {
       if (psub) psub.textContent = document.getElementById('pension-pct').value + '% of employee gross';
     }
   }
+  var slRow = document.getElementById('o-student-loan-row');
+  if (slRow) {
+    var showSl = r.studentLoanRepayment > 0;
+    slRow.style.display = showSl ? '' : 'none';
+    if (showSl) {
+      var planLabels = { plan1:'Plan 1', plan2:'Plan 2', plan4:'Plan 4', plan5:'Plan 5', postgrad:'Postgraduate Loan' };
+      var slSub = document.getElementById('o-student-loan-sub');
+      if (slSub) slSub.textContent = (planLabels[ans.studentLoan] || '') + ' repayment';
+    }
+  }
   var effEl = document.getElementById('o-eff-rate');
   if (effEl) effEl.textContent = r.effRate.toFixed(1) + '%';
 }
@@ -1778,7 +1789,7 @@ function renderOutput() {
 /* ── count-up ── */
 function resetNums() {
   ['o-gross','o-umbrella','o-employer-ni','o-levy','o-employee-ni',
-   'o-income-tax','o-pension','o-net-annual','o-net-monthly'].forEach(function(id){
+   'o-income-tax','o-pension','o-student-loan','o-net-annual','o-net-monthly'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.textContent = '£0';
   });
@@ -1816,15 +1827,16 @@ function countUp() {
     if (!calcResult) return;
     var r = calcResult;
     ITEMS = [
-      { id:'o-gross',       val:r.annualGross,    neg:false },
-      { id:'o-umbrella',    val:r.umbrellaAnnual, neg:true  },
-      { id:'o-employer-ni', val:r.employerNI,     neg:true  },
-      { id:'o-levy',        val:r.levy,           neg:true  },
-      { id:'o-employee-ni', val:r.employeeNI,     neg:true  },
-      { id:'o-income-tax',  val:r.incomeTax,      neg:true  },
-      { id:'o-pension',     val:r.pension,        neg:true  },
-      { id:'o-net-annual',  val:r.netAnnual,      neg:false },
-      { id:'o-net-monthly', val:r.netMonthly,     neg:false },
+      { id:'o-gross',        val:r.annualGross,          neg:false },
+      { id:'o-umbrella',     val:r.umbrellaAnnual,       neg:true  },
+      { id:'o-employer-ni',  val:r.employerNI,           neg:true  },
+      { id:'o-levy',         val:r.levy,                 neg:true  },
+      { id:'o-employee-ni',  val:r.employeeNI,           neg:true  },
+      { id:'o-income-tax',   val:r.incomeTax,            neg:true  },
+      { id:'o-pension',      val:r.pension,              neg:true  },
+      { id:'o-student-loan', val:r.studentLoanRepayment, neg:true  },
+      { id:'o-net-annual',   val:r.netAnnual,            neg:false },
+      { id:'o-net-monthly',  val:r.netMonthly,           neg:false },
     ];
   }
   var DUR = 800, t0 = null;
@@ -1842,6 +1854,8 @@ function countUp() {
       if (item.id === 'o-ltd-pension-corp' && ltdPRow && ltdPRow.style.display === 'none') return;
       var eniRow = document.getElementById('o-ltd-employer-ni-row');
       if (item.id === 'o-ltd-employer-ni' && eniRow && eniRow.style.display === 'none') return;
+      var slRow = document.getElementById('o-student-loan-row');
+      if (item.id === 'o-student-loan' && slRow && slRow.style.display === 'none') return;
       el.textContent = (item.neg?'-':'')+'£'+Math.round(e*item.val).toLocaleString('en-GB');
     });
     if (p < 1) requestAnimationFrame(frame);
