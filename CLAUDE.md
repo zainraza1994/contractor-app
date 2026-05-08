@@ -91,12 +91,12 @@ Built in 6 stages:
 - [ ] Stage 3: Sole Trader route and calculations
 - [x] Stage 4: Limited Company, single director
 - [x] Stage 5: Limited Company, multiple directors (up to 3)
-- [ ] Stage 6: Comparison screen, PWA install, final polish
+- [x] Stage 6: Comparison screen, PWA install, final polish
 
 ## Navigation architecture (important for future changes)
 The JavaScript uses a **history-stack navigation** — not a linear index. Key pieces:
 
-- `SCREENS` — object map (keys 0–28) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–28 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
+- `SCREENS` — object map (keys 0–29) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–28 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
 - `history` — array stack; `onContinue()` pushes current index before advancing; `goBack()` pops and returns
 - `getNextScreen(idx)` — handles all routing branches:
   - Screen 1 → screen 10 if `ans.ir35 === 'outside'`, else screen 2 (Inside IR35)
@@ -111,7 +111,9 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 - `dirLoop = { current: 0 }` — tracks which director (0-indexed) the loop is currently collecting data for
 - `goBack()` decrements `dirLoop.current` when navigating back to screen 20 from screen 24, 25, **or 28** (cross-director boundary)
 - `loopPct(fieldIdx)` now uses 7 fields (0=name, 1=shareholding, 2=salary, 3=employed, 4=pension, 5=pension-amount, 6=student-loan)
-- Both output screens (9 and 19) use "Recalculate" which calls `resetAll()` and returns to screen 0
+- Both output screens (9 and 19) use "Start Over" which calls `resetAll()` and returns to screen 0
+- `goToComparison()` — called by the ghost pill button on screens 9 and 19; pushes current screen to history then goes to screen 29
+- Screen 29 `onContinue` calls `resetAll()` and goes to screen 0 (same as screens 9 and 19)
 
 **When adding the Sole Trader route:** screens 20–25 are taken by the director loop. Add Sole Trader screens from 26+. Update `getNextScreen(1)` to branch on `ans.ir35 === 'sole-trader'`, and add a new `ir35` card value for sole trader on screen 1.
 
@@ -167,6 +169,11 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 28 | screen-28 | Student loan? (6-card 2-col grid; data-group `dirStudentLoan`) |
 
 The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
+
+### Comparison output (screen 29)
+| Index | ID | Content |
+|---|---|---|
+| 29 | screen-29 | Comparison — stacked IR35 vs Ltd Co cards, Start Over button |
 
 **Screen 21 — last-director auto-fill:** `onEnter(21)` checks `dirLoop.current === +ans.numDirectors − 1`. If true, it sets `dir-shareholding` to `100 − allocatedSoFar()`, marks the input `readOnly = true`, dims it (`opacity: 0.6`, `pointerEvents: none`), updates the hint in emerald, and calls `syncUI()`. `syncShareholding()` skips its normal hint update when the input is `readOnly`.
 
