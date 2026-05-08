@@ -1361,7 +1361,8 @@ function getNextScreen(idx) {
   if (idx === 5) return 6;
   if (idx === 6) return ans.pension === 'yes' ? 7 : 8;
   if (idx === 7) return 8;
-  if (idx === 8) return 9;
+  if (idx === 8) return 26;
+  if (idx === 26) return 9;
   if (idx === 10) return 11;
   if (idx === 11) return 12;
   if (idx === 12) return 13;
@@ -1372,19 +1373,20 @@ function getNextScreen(idx) {
   }
   if (idx === 14) return 15;
   if (idx === 15) return 16;
-  if (idx === 16) return +ans.numDirectors > 1 ? 19 : (ans.ltdPension === 'yes' ? 18 : 19);
-  if (idx === 17) return ans.ltdPension === 'yes' ? 18 : 19;
-  if (idx === 18) return 19;
+  if (idx === 16) return +ans.numDirectors > 1 ? 19 : 17;
+  if (idx === 17) return ans.ltdPension === 'yes' ? 18 : 27;
+  if (idx === 18) return 27;
+  if (idx === 27) return 19;
   if (idx === 20) return 21;
   if (idx === 21) return 22;
   if (idx === 22) return 23;
   if (idx === 23) return 24;
   if (idx === 24) {
     if (ans.directors[dirLoop.current] && ans.directors[dirLoop.current].pension === 'yes') return 25;
-    saveCurrentDirector();
-    return nextDirectorOrExit();
+    return 28;
   }
-  if (idx === 25) {
+  if (idx === 25) return 28;
+  if (idx === 28) {
     saveCurrentDirector();
     return nextDirectorOrExit();
   }
@@ -1473,7 +1475,7 @@ function onEnter(idx) {
 window.goBack = function(){
   if (history.length === 0) return;
   var prev = history.pop();
-  if (cur === 20 && (prev === 24 || prev === 25) && dirLoop.current > 0) {
+  if (cur === 20 && (prev === 24 || prev === 25 || prev === 28) && dirLoop.current > 0) {
     dirLoop.current--;
   }
   goTo(prev, -1);
