@@ -639,6 +639,7 @@ html,body{
       <div class="o-sub" id="o-student-loan-sub"></div>
     </div>
 
+    <button class="ghost-btn" onclick="goToComparison()">See all scenarios compared</button>
     <div class="disclaimer">
       This calculator provides estimates only and does not constitute financial or tax advice.
       Tax rules are complex and individual circumstances vary. Please consult a qualified accountant.
@@ -953,6 +954,7 @@ html,body{
       <div class="o-sub">of gross contract value</div>
     </div>
 
+    <button class="ghost-btn" onclick="goToComparison()">See all scenarios compared</button>
     <div class="disclaimer">
       This calculator provides estimates only and does not constitute financial or tax advice.
       Tax rules are complex and individual circumstances vary. Please consult a qualified accountant.
@@ -1299,8 +1301,30 @@ html,body{
   </div>
 </div>
 
+<!-- SCREEN 29 — Comparison -->
+<div class="screen" id="screen-29">
+  <div class="lbl">Compare Scenarios</div>
+  <h2 class="q-h" style="margin-bottom:8px">How do the scenarios stack up?</h2>
+  <p class="q-s">Based on your inputs. Estimated scenarios use default values.</p>
+  <div id="comparison-cards" class="out-cards"></div>
+  <div class="disclaimer" style="margin-top:14px">
+    This calculator provides estimates only and does not constitute financial or tax advice.
+    Tax rules are complex and individual circumstances vary. Please consult a qualified accountant.
+  </div>
+</div>
+
 <!-- EXPENSES TOTAL (fixed bar, shown only on screen 16) -->
 <div class="exp-total-line" id="exp-total-lbl">Total: £0/month</div>
+
+<!-- PWA INSTALL BANNER -->
+<div id="pwa-banner">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M10 2V12M10 2L7 5M10 2L13 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="4" y="14" width="12" height="4" rx="1" stroke="white" stroke-width="1.6"/>
+  </svg>
+  <span id="pwa-banner-text">Tap <strong>Share</strong> → "Add to Home Screen" to install</span>
+  <button id="pwa-dismiss" onclick="dismissPWABanner()" aria-label="Dismiss">&#x2715;</button>
+</div>
 
 <!-- BOTTOM CHROME -->
 <div id="chrome-bot">
