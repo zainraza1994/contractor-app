@@ -277,6 +277,67 @@ html,body{
 }
 .btn:active:not(:disabled){transform:scale(.97)}
 .btn:disabled{background:rgba(255,255,255,.1);color:rgba(255,255,255,.28);cursor:default}
+
+/* ── Ghost comparison button ── */
+.ghost-btn{
+  display:block;width:100%;height:52px;
+  background:none;border:1.5px solid rgba(255,255,255,.25);border-radius:100px;
+  font-family:inherit;font-size:15px;font-weight:600;
+  color:rgba(255,255,255,.7);cursor:pointer;letter-spacing:-.1px;
+  margin-bottom:14px;
+  transition:border-color 150ms,color 150ms;
+  -webkit-tap-highlight-color:transparent;
+}
+.ghost-btn:active{border-color:rgba(255,255,255,.6);color:var(--white)}
+
+/* ── Comparison screen cards ── */
+.comp-winner{
+  background:rgba(0,196,140,.06)!important;
+  border:1.5px solid var(--emerald)!important;
+  position:relative;
+}
+.best-badge{
+  position:absolute;top:14px;right:16px;
+  padding:3px 10px;border-radius:100px;
+  background:var(--emerald);
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#0D1B2A;
+}
+.comp-row{
+  display:flex;justify-content:space-between;
+  margin-top:12px;padding-top:12px;
+  border-top:1px solid rgba(13,27,42,.08);
+}
+.comp-col{flex:1}
+.comp-col-lbl{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(13,27,42,.4);margin-bottom:3px;
+}
+.comp-col-val{
+  font-family:'DM Serif Display',serif;font-size:24px;color:#0D1B2A;
+}
+.comp-col-val.pos{color:#009E72}
+
+/* ── PWA install banner ── */
+#pwa-banner{
+  position:fixed;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 82px);
+  left:0;right:0;z-index:199;
+  background:rgba(0,196,140,.12);
+  border-top:1px solid rgba(0,196,140,.25);
+  padding:10px 20px;
+  display:none;
+  align-items:center;gap:10px;
+  font-size:13px;color:rgba(255,255,255,.8);
+}
+#pwa-banner-text{flex:1;line-height:1.4}
+#pwa-dismiss{
+  background:none;border:none;color:rgba(255,255,255,.5);
+  font-size:18px;cursor:pointer;padding:4px;
+  min-width:32px;min-height:32px;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
 </style>
 </head>
 <body>
