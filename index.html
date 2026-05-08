@@ -2087,12 +2087,12 @@ function renderLtdOutput() {
           '<span class="out-row-val pos" id="o-dir-' + i + '-divs-received">\xa30</span></div>' +
         '<div class="out-row"><span class="out-row-lbl">Dividend Tax</span>' +
           '<span class="out-row-val neg" id="o-dir-' + i + '-div-tax">-\xa30</span></div>' +
-        '<div class="out-row out-row-total"><span class="out-row-lbl out-row-lbl-bold">Director Net Take-Home</span>' +
-          '<span class="out-row-val pos lg" id="o-dir-' + i + '-net">\xa30</span></div>' +
         (d.studentLoanRepayment > 0
           ? '<div class="out-row"><span class="out-row-lbl">Student Loan Repayment</span>' +
             '<span class="out-row-val neg" id="o-dir-' + i + '-student-loan">-\xa30</span></div>'
           : '') +
+        '<div class="out-row out-row-total"><span class="out-row-lbl out-row-lbl-bold">Director Net Take-Home</span>' +
+          '<span class="out-row-val pos lg" id="o-dir-' + i + '-net">\xa30</span></div>' +
         warning +
         '</div>';
     }).join('');
