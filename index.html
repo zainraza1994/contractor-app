@@ -1437,6 +1437,7 @@ var SCREENS = {
   27: { pct:90,  back:true, step:'9 of 10', btn:'Continue', ok:function(){ return ans.studentLoan !== null; } },
   28: { pct: function(){return loopPct(6);}, back:true, step: loopStep, btn:'Continue',
         ok: function(){ var d=ans.directors[dirLoop.current]; return !!(d&&d.studentLoan!==null&&d.studentLoan!==undefined); } },
+  29: { pct:100, back:true, step:'Compare', btn:'Start Over', ok:function(){ return true; } },
 };
 
 function getNextScreen(idx) {
@@ -1585,6 +1586,11 @@ function onEnter(idx) {
     setTimeout(staggerIn, 100);
     setTimeout(countUp, 200);
   }
+  if (idx === 29) {
+    var s29 = buildComparisonScenarios();
+    renderComparisonCards(s29);
+    setTimeout(staggerIn, 100);
+  }
 }
 
 window.goBack = function(){
@@ -1598,7 +1604,7 @@ window.goBack = function(){
 
 window.onContinue = function(){
   if (!SCREENS[cur].ok()) return;
-  if (cur === 9 || cur === 19) {
+  if (cur === 9 || cur === 19 || cur === 29) {
     resetAll();
     goTo(0, -1);
   } else {
@@ -1954,7 +1960,7 @@ function countUp() {
 }
 
 function staggerIn() {
-  var sel = cur === 19 ? '#screen-19' : '#screen-9';
+  var sel = cur === 19 ? '#screen-19' : cur === 29 ? '#screen-29' : '#screen-9';
   var cards = [].slice.call(document.querySelectorAll(sel+' .out-card, '+sel+' .hero'));
   var visible = cards.filter(function(c){ return c.style.display !== 'none'; });
   visible.forEach(function(card, i){
