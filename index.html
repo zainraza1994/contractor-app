@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+/<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1370,7 +1370,7 @@ function getExpTotal() {
   }, 0);
 }
 
-var cur = 0, busy = false;
+var cur = 0, busy = false, autoAdvanceTimer = null;
 var history = [];
 var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
             ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null,
@@ -1603,6 +1603,7 @@ window.goBack = function(){
 };
 
 window.onContinue = function(){
+  clearTimeout(autoAdvanceTimer);
   if (!SCREENS[cur].ok()) return;
   if (cur === 9 || cur === 19 || cur === 29) {
     resetAll();
@@ -1643,7 +1644,7 @@ window.pickCard = function(el) {
   var isEmpElsewhere = grp === 'employedElsewhere' || grp === 'ltdEmployedElsewhere' || grp === 'dirEmployedElsewhere';
   var autoAdvance = !isEmpElsewhere || el.dataset.value === 'no';
   if (autoAdvance) {
-    setTimeout(function(){
+    autoAdvanceTimer = setTimeout(function(){
       if (!busy && SCREENS[cur].ok()) {
         history.push(cur); goTo(getNextScreen(cur), 1);
       }
