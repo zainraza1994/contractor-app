@@ -1598,6 +1598,11 @@ window.goBack = function(){
   var prev = history.pop();
   if (cur === 20 && (prev === 24 || prev === 25 || prev === 28) && dirLoop.current > 0) {
     dirLoop.current--;
+    populateLoopScreens();
+  }
+  if (cur === 16 && (prev === 28 || prev === 24 || prev === 25) && dirLoop.current > 0 && ans.numDirectors && dirLoop.current >= +ans.numDirectors) {
+    dirLoop.current--;
+    populateLoopScreens();
   }
   goTo(prev, -1);
 };

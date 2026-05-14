@@ -109,7 +109,10 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
   - Screen 25 → screen 28; screen 28 → `saveCurrentDirector()` then `nextDirectorOrExit()` (returns 20 if more directors remain, 16 when all done)
 - `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension, directors: [] }`
 - `dirLoop = { current: 0 }` — tracks which director (0-indexed) the loop is currently collecting data for
-- `goBack()` decrements `dirLoop.current` when navigating back to screen 20 from screen 24, 25, **or 28** (cross-director boundary)
+- `goBack()` decrements `dirLoop.current` at two cross-director boundary crossings:
+  1. Navigating back to screen 20 from screen 24, 25, or 28 (between directors mid-loop)
+  2. Navigating back from screen 16 to screen 28 (re-entering the loop after all directors completed — `dirLoop.current` would otherwise be out-of-bounds at `numDirectors`)
+  - In both cases, `populateLoopScreens()` is called immediately after decrementing so the shared DOM inputs (name, shareholding, salary, pension amount) reflect the correct director's saved data before any further saves via `saveCurrentDirector()`
 - `loopPct(fieldIdx)` now uses 7 fields (0=name, 1=shareholding, 2=salary, 3=employed, 4=pension, 5=pension-amount, 6=student-loan)
 - Both output screens (9 and 19) use "Start Over" which calls `resetAll()` and returns to screen 0
 - `goToComparison()` — called by the ghost pill button on screens 9 and 19; pushes current screen to history then goes to screen 29
