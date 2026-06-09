@@ -903,6 +903,10 @@ html,body{
         <span class="out-row-lbl">Gross Revenue</span>
         <span class="out-row-val pos" id="o-ltd-gross">£0</span>
       </div>
+      <div class="out-row" id="o-ltd-vat-frs-row" style="display:none">
+        <span class="out-row-lbl">VAT Flat Rate Surplus</span>
+        <span class="out-row-val pos" id="o-ltd-vat-frs">£0</span>
+      </div>
       <div class="out-row">
         <span class="out-row-lbl">Expenses</span>
         <span class="out-row-val neg" id="o-ltd-expenses-out">-£0</span>
@@ -1313,6 +1317,58 @@ html,body{
   </div>
 </div>
 
+<!-- SCREEN 30 — VAT Status -->
+<div class="screen" id="screen-30">
+  <div class="lbl">VAT</div>
+  <h2 class="q-h">Is the company VAT registered?</h2>
+  <p class="q-s">If you're on the flat rate scheme, we'll include the surplus in your take-home.</p>
+  <div class="cards">
+    <div class="card" data-group="vatStatus" data-value="none" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Not VAT registered</div>
+        <div class="c-desc">Below the £90,000 threshold or not registered</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="vatStatus" data-value="standard" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Standard VAT</div>
+        <div class="c-desc">Charge 20%, pay 20% — pass-through, no surplus</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="card" data-group="vatStatus" data-value="flatrate" onclick="pickCard(this)">
+      <div class="card-body">
+        <div class="c-title">Flat Rate Scheme</div>
+        <div class="c-desc">Pay a lower % to HMRC — the difference is profit</div>
+      </div>
+      <div class="c-icon">
+        <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="ico-arr" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 9H12M12 9L9.5 6.5M12 9L9.5 11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 31 — VAT flat rate % (conditional) -->
+<div class="screen" id="screen-31">
+  <div class="lbl">VAT Flat Rate</div>
+  <h2 class="q-h">What is your flat rate percentage?</h2>
+  <p class="q-s">The rate you pay to HMRC on your VAT-inclusive turnover.</p>
+  <div class="inp-row">
+    <input class="num" id="vat-flat-rate" type="number" inputmode="decimal"
+      placeholder="0" autocomplete="off" oninput="syncUI()">
+    <span class="inp-pfx" style="padding-left:4px;padding-right:0">%</span>
+  </div>
+  <div class="inp-hint">Common rates: IT consultants 14.5% &nbsp;·&nbsp; Management consultants 14%</div>
+</div>
+
 <!-- EXPENSES TOTAL (fixed bar, shown only on screen 16) -->
 <div class="exp-total-line" id="exp-total-lbl">Total: £0/month</div>
 
@@ -1374,7 +1430,7 @@ var cur = 0, busy = false, autoAdvanceTimer = null;
 var history = [];
 var ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
             ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null,
-            studentLoan: null, directors: [] };
+            studentLoan: null, directors: [], vatStatus: null };
 var ltdCalcResult = null;
 var dirLoop = { current: 0 };
 
@@ -1438,6 +1494,8 @@ var SCREENS = {
   28: { pct: function(){return loopPct(6);}, back:true, step: loopStep, btn:'Continue',
         ok: function(){ var d=ans.directors[dirLoop.current]; return !!(d&&d.studentLoan!==null&&d.studentLoan!==undefined); } },
   29: { pct:100, back:true, step:'Compare', btn:'Start Over', ok:function(){ return true; } },
+  30: { pct:38,  back:true, step:'5 of 11', btn:'Continue', ok:function(){ return ans.vatStatus !== null; } },
+  31: { pct:39,  back:true, step:'5 of 11', btn:'Continue', ok:function(){ var v=document.getElementById('vat-flat-rate').value; return v!==''&&+v>0&&+v<100; } },
 };
 
 function getNextScreen(idx) {
@@ -1454,7 +1512,14 @@ function getNextScreen(idx) {
   if (idx === 10) return 11;
   if (idx === 11) return 12;
   if (idx === 12) return 13;
-  if (idx === 13) {
+  if (idx === 13) return 30;
+  if (idx === 30) {
+    if (ans.vatStatus === 'flatrate') return 31;
+    if (ans.numDirectors === '1') return 14;
+    initDirLoop();
+    return 20;
+  }
+  if (idx === 31) {
     if (ans.numDirectors === '1') return 14;
     initDirLoop();
     return 20;
@@ -1552,6 +1617,7 @@ function onEnter(idx) {
   }
   if (idx === 22) setTimeout(function(){ var el=document.getElementById('dir-salary-loop'); if(el) el.focus(); }, 340);
   if (idx === 25) setTimeout(function(){ var el=document.getElementById('dir-pension-amount-loop'); if(el) el.focus(); }, 340);
+  if (idx === 31) setTimeout(function(){ var el=document.getElementById('vat-flat-rate'); if(el) el.focus(); }, 340);
   if (idx === 26) {
     [].forEach.call(document.querySelectorAll('[data-group="studentLoan"]'), function(c){
       c.classList.remove('selected');
@@ -1688,6 +1754,7 @@ addInputListeners('dir-name');
 addInputListeners('dir-shareholding');
 addInputListeners('dir-salary-loop');
 addInputListeners('dir-pension-amount-loop');
+addInputListeners('vat-flat-rate');
 
 function syncUI() {
   var c = SCREENS[cur];
@@ -2080,6 +2147,7 @@ function countUp() {
       ITEMS = [
         { id:'o-ltd-net-annual',    val:lr.totalNetTakeHome,     neg:false },
         { id:'o-ltd-gross',         val:lr.annualGross,           neg:false },
+        { id:'o-ltd-vat-frs',       val:lr.frsSurplus,            neg:false },
         { id:'o-ltd-expenses-out',  val:lr.annualExpenses,        neg:true  },
         { id:'o-ltd-salary-out',    val:lr.totalSalaries,         neg:true  },
         { id:'o-ltd-pension-corp',  val:lr.totalPensions,         neg:true  },
@@ -2133,6 +2201,8 @@ function countUp() {
       if (item.id === 'o-ltd-pension-corp' && ltdPRow && ltdPRow.style.display === 'none') return;
       var eniRow = document.getElementById('o-ltd-employer-ni-row');
       if (item.id === 'o-ltd-employer-ni' && eniRow && eniRow.style.display === 'none') return;
+      var vatFrsRow = document.getElementById('o-ltd-vat-frs-row');
+      if (item.id === 'o-ltd-vat-frs' && vatFrsRow && vatFrsRow.style.display === 'none') return;
       var slRow = document.getElementById('o-student-loan-row');
       if (item.id === 'o-student-loan' && slRow && slRow.style.display === 'none') return;
       el.textContent = (item.neg?'-':'')+'£'+Math.round(e*item.val).toLocaleString('en-GB');
@@ -2209,7 +2279,13 @@ function calculateLtdCo() {
   var employmentAllowance = numDirs === 1 ? 0 : 10500;
   var netEmployerNI = Math.max(0, totalEmployerNI - employmentAllowance);
 
-  var taxableProfit = annualGross - annualExpenses - totalSalaries - totalPensions - netEmployerNI;
+  var frsSurplus = 0;
+  if (ans.vatStatus === 'flatrate') {
+    var flatRate = (+document.getElementById('vat-flat-rate').value || 0) / 100;
+    frsSurplus = Math.max(0, annualGross * (0.20 - 1.20 * flatRate));
+  }
+
+  var taxableProfit = annualGross - annualExpenses - totalSalaries - totalPensions - netEmployerNI + frsSurplus;
 
   var corporationTax = 0;
   if (taxableProfit > 0) {
@@ -2291,6 +2367,7 @@ function calculateLtdCo() {
     totalSalaries:      totalSalaries,
     totalPensions:      totalPensions,
     netEmployerNI:      netEmployerNI,
+    frsSurplus:         frsSurplus,
     taxableProfit:      taxableProfit,
     corporationTax:     corporationTax,
     dividendsAvailable: dividendsAvailable,
@@ -2303,7 +2380,7 @@ function calculateLtdCo() {
 }
 
 function resetLtdNums() {
-  ['o-ltd-net-annual','o-ltd-gross','o-ltd-expenses-out','o-ltd-salary-out',
+  ['o-ltd-net-annual','o-ltd-gross','o-ltd-vat-frs','o-ltd-expenses-out','o-ltd-salary-out',
    'o-ltd-pension-corp','o-ltd-employer-ni','o-ltd-corp-tax','o-ltd-dividends',
    'o-ltd-net-monthly','o-combined-net','o-combined-tax'].forEach(function(id){
     var el = document.getElementById(id);
@@ -2343,6 +2420,8 @@ function renderLtdOutput() {
   }
   var eniRow = document.getElementById('o-ltd-employer-ni-row');
   if (eniRow) eniRow.style.display = r.netEmployerNI > 0 ? '' : 'none';
+  var vatFrsRow = document.getElementById('o-ltd-vat-frs-row');
+  if (vatFrsRow) vatFrsRow.style.display = r.frsSurplus > 0 ? '' : 'none';
 
   var container = document.getElementById('director-cards-container');
   if (container) {
@@ -2394,14 +2473,14 @@ function renderLtdOutput() {
 function resetAll() {
   ans = { ir35: null, daysPerWeek: null, pension: null, employedElsewhere: null,
           ltdDaysPerWeek: null, numDirectors: null, ltdEmployedElsewhere: null, ltdPension: null,
-          studentLoan: null, directors: [] };
+          studentLoan: null, directors: [], vatStatus: null };
   dirLoop = { current: 0 };
   var dirContainer = document.getElementById('director-cards-container');
   if (dirContainer) dirContainer.innerHTML = '';
   var combinedCard = document.getElementById('o-combined-card');
   if (combinedCard) combinedCard.style.display = 'none';
   history = []; calcResult = null; ltdCalcResult = null;
-  ['day-rate','holiday-days','pension-pct','ltd-day-rate','ltd-holiday-days','ltd-pension-amount'].forEach(function(id){
+  ['day-rate','holiday-days','pension-pct','ltd-day-rate','ltd-holiday-days','ltd-pension-amount','vat-flat-rate'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = '';
   });

@@ -173,6 +173,16 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 
 The loop label `dir-loop-lbl-{20–25}` on each screen shows "Director N of M" and is updated by `populateLoopScreens()` when entering screen 20.
 
+### VAT screens (screens 30–31, Ltd Co only — inserted between screen 13 and screen 14/20)
+| Index | ID | Content |
+|---|---|---|
+| 30 | screen-30 | VAT Status — 3 tappable cards: "Not VAT registered" (`none`), "Standard VAT" (`standard`), "Flat Rate Scheme" (`flatrate`). Stored as `ans.vatStatus`. |
+| 31 | screen-31 | VAT Flat Rate % — number input (`id="vat-flat-rate"`), shown only when `vatStatus === 'flatrate'`. |
+
+**Navigation:** `getNextScreen(13)` → 30. `getNextScreen(30)` → 31 if flatrate, else 14 (1 director) or 20 (multi, calling `initDirLoop()`). `getNextScreen(31)` → 14 (1 director) or 20 (multi, calling `initDirLoop()`).
+
+**FRS Calculation:** `frsSurplus = max(0, annualGross × (0.20 − 1.20 × flatRate))`. Added to `taxableProfit` before corporation tax. Stored in `ltdCalcResult.frsSurplus`. Shown as "VAT Flat Rate Surplus" (positive, emerald) in the Company card on screen 19, hidden when zero.
+
 ### Comparison output (screen 29)
 | Index | ID | Content |
 |---|---|---|
