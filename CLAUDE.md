@@ -96,18 +96,20 @@ Built in 6 stages:
 ## Navigation architecture (important for future changes)
 The JavaScript uses a **history-stack navigation** — not a linear index. Key pieces:
 
-- `SCREENS` — object map (keys 0–29) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–28 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
+- `SCREENS` — object map (keys 0–31) with per-screen config: progress %, step label, button text, and an `ok()` function that enables/disables Continue. Progress % and step label for screens 20–28 are functions (not fixed strings) that compute dynamically based on `dirLoop.current`.
 - `history` — array stack; `onContinue()` pushes current index before advancing; `goBack()` pops and returns
 - `getNextScreen(idx)` — handles all routing branches:
   - Screen 1 → screen 10 if `ans.ir35 === 'outside'`, else screen 2 (Inside IR35)
   - Screen 6 → screen 7 if `ans.pension === 'yes'`, else screen 8
   - Screen 8 → screen 26 (student loan); screen 26 → screen 9
-  - Screen 13 → screen 14 if `ans.numDirectors === '1'`; otherwise calls `initDirLoop()` and → screen 20
+  - Screen 13 → screen 30 (VAT status — always, for all director counts)
+  - Screen 30 → screen 31 if `ans.vatStatus === 'flatrate'`; else → 14 (1 director) or calls `initDirLoop()` and → 20
+  - Screen 31 → screen 14 (1 director) or calls `initDirLoop()` and → 20
   - Screen 16 → screen 17 for single director (pension yes/no) — this was previously broken and is now fixed
   - Screen 17 → screen 18 if ltdPension='yes', else screen 27; screen 18 → screen 27; screen 27 → screen 19
   - Screen 24 → screen 25 if current director's pension is 'yes'; otherwise screen 28
   - Screen 25 → screen 28; screen 28 → `saveCurrentDirector()` then `nextDirectorOrExit()` (returns 20 if more directors remain, 16 when all done)
-- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension, directors: [] }`
+- `ans` object — stores all answers: `{ ir35, daysPerWeek, pension, employedElsewhere, ltdDaysPerWeek, numDirectors, ltdEmployedElsewhere, ltdPension, vatStatus, directors: [] }`
 - `dirLoop = { current: 0 }` — tracks which director (0-indexed) the loop is currently collecting data for
 - `goBack()` decrements `dirLoop.current` at two cross-director boundary crossings:
   1. Navigating back to screen 20 from screen 24, 25, or 28 (between directors mid-loop)
@@ -217,7 +219,7 @@ Screen 16 is a single-column scrollable list of 9 input cards, all blank by defa
 Card order (top to bottom):
 - **Hero card** — Net Annual Take-Home (count-up animation; combined total for 2+ directors)
 - **Net Monthly Take-Home card** (`#o-ltd-monthly-card`) — always visible (both 1 and 2+ directors); shows `totalNetTakeHome / 12`; first card in `.out-cards`, mirroring the Inside IR35 output layout
-- **Company card** — Gross Revenue, Expenses (with indented per-category breakdown beneath for non-zero categories, populated by `renderLtdOutput()` into `#o-ltd-expenses-breakdown`; breakdown text uses `rgba(13,27,42,.45)` — dark, not white), Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
+- **Company card** — Gross Revenue, VAT Flat Rate Surplus (hidden when zero; positive/emerald; id `o-ltd-vat-frs-row`), Expenses (with indented per-category breakdown beneath for non-zero categories, populated by `renderLtdOutput()` into `#o-ltd-expenses-breakdown`; breakdown text uses `rgba(13,27,42,.45)` — dark, not white), Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
 - **Director cards** — one per director, generated dynamically into `#director-cards-container` (which has `display:flex;flex-direction:column;gap:10px` to space cards correctly). Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
 - **Combined Total card** (`#o-combined-card`) — visible for 2+ directors only; shows Total Net Take-Home, Total Tax Paid, Combined Effective Rate
 - **Effective Tax Rate** card — visible for 1 director only
@@ -226,6 +228,7 @@ Card order (top to bottom):
 ### Ltd Co calculation notes
 - **Employment Allowance:** £10,500 for 2+ directors; £0 for single director. Applied to Employer NI before deducting from taxable profit.
 - **Employer NI per director:** `max(0, salary − £5,000) × 15%`. Summed across all directors, then employment allowance subtracted.
+- **VAT Flat Rate Surplus:** `frsSurplus = max(0, annualGross × (0.20 − 1.20 × flatRate))`. Only computed when `ans.vatStatus === 'flatrate'`. Added to `taxableProfit` before corporation tax (it is genuine company profit subject to CT). Stored as `ltdCalcResult.frsSurplus`.
 - **Dividends:** each director receives `dividendsAvailable × (shareholding / 100)`.
 - **PA tapering** applies per director based on their individual `salary + dividendsReceived`.
 - **Effective rate** = `totalTaxPaid / annualGross × 100` where `totalTaxPaid = annualGross − totalNetTakeHome`.

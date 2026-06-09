@@ -43,7 +43,7 @@ docs/
 | 3 | Outside IR35 — Sole Trader | ⬜ Not started |
 | 4 | Outside IR35 — Limited Company (single director) | ✅ Done |
 | 5 | Outside IR35 — Limited Company (multiple directors, up to 3) | ✅ Done |
-| 6 | Comparison screen, PWA install, final polish | ⬜ Not started |
+| 6 | Comparison screen, PWA install, final polish | ✅ Done |
 
 ## Tax rates used (2026/27)
 
@@ -57,6 +57,7 @@ docs/
 - Dividend Tax: 10.75% basic / 35.75% higher / 39.35% additional
 - Class 4 NI (Sole Trader): 6% on £12,570–£50,270, 2% above
 - Class 2 NI: excluded (voluntary only)
+- VAT Flat Rate Scheme surplus: `annualGross × (20% − 120% × flatRate%)` — added to company profit before corporation tax
 
 ## How the Inside IR35 calculation works
 
@@ -95,20 +96,24 @@ The **Effective Rate** shown on the output screen is `net annual ÷ gross contra
 | 8 | Employed elsewhere |
 | 9 | Output |
 
-### Outside IR35 — Ltd Co (screens 10–25)
+### Outside IR35 — Ltd Co (screens 10–31)
 | Screen | Content |
 |--------|---------|
 | 10 | Day rate |
 | 11 | Days per week |
 | 12 | Holiday days |
 | 13 | Number of directors (1, 2, or 3) |
+| 30 | VAT status — Not registered / Standard VAT / Flat Rate Scheme |
+| 31 | VAT flat rate % — conditional, shown only for Flat Rate Scheme |
 | 14 | Director salary — single director only (default £12,570) |
 | 15 | Employed elsewhere — single director only |
-| 16 | Monthly company expenses — 9 categorised inputs in a single-column scrollable list (accounting, travel, insurance, equipment, software, phone, food, other wages, misc); live total bar and continue button fixed at the bottom |
+| 27 | Student loan — single director only |
+| 16 | Monthly company expenses — 9 categorised inputs; live total bar fixed at the bottom |
 | 17 | Company pension yes/no — single director only |
 | 18 | Monthly pension amount — single director only (conditional) |
-| 19 | Output — Company card (with per-category expense breakdown) + per-director cards + combined total |
-| 20–25 | Director detail loop (2+ directors) — name, shareholding %, salary, employed elsewhere, pension |
+| 19 | Output — Company card (with VAT FRS surplus, expense breakdown) + per-director cards + combined total |
+| 20–28 | Director detail loop (2+ directors) — name, shareholding %, salary, employed elsewhere, pension, student loan |
+| 29 | Comparison — side-by-side IR35 vs Ltd Co cards |
 
 ## Disclaimer
 
