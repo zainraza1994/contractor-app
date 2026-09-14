@@ -77,6 +77,7 @@ These thresholds are uprated most Aprils — re-verify them at the start of each
 
 ## Key rules when making changes
 - Never change the tax rates without being explicitly asked
+- Tax rates live only in the `RATES` object and `STUDENT_LOAN_PLANS` — never hardcode a rate inside a calculation function
 - Never introduce external libraries or frameworks
 - Never break the single-file structure
 - Never change the colour palette or fonts
@@ -246,19 +247,49 @@ Card order (top to bottom):
   rather than shifting the higher bands down.
 - **Effective rate** = `totalTaxPaid / annualGross × 100` where `totalTaxPaid = annualGross − totalNetTakeHome`.
 
-### Rate constants are duplicated across four functions — keep them in sync
-There is no shared rates object. The same rates are hardcoded in all four of these, and a
-rate fixed in one but not the others makes the comparison screen disagree with the output screen:
+## Tax rates live in ONE place — the `RATES` object
+
+Every tax rate and threshold is defined once, in the `RATES` object at the very top of the
+`<script>` IIFE (just above `EXP_CATS`). Student loan thresholds live in `STUDENT_LOAN_PLANS`
+directly below it. **No calculation function contains a raw tax number.**
+
+**To update for a new tax year:** change the values in `RATES` and `STUDENT_LOAN_PLANS`, update
+the "Tax rates" section at the top of this file to match, and nothing else. Do not add rate
+literals back into the calculation functions.
+
+### Shared tax helpers (defined right after `RATES`)
+All four calculators call these instead of doing their own tax maths:
+
+| Helper | Does |
+|---|---|
+| `taperedPA(income)` | Personal allowance after the £100k taper (£1 per whole £2) |
+| `incomeTaxOn(taxable, pa)` | Income tax on salary — fixed £37,700 basic band, 45% from £125,140 total income |
+| `employeeNIOn(gross)` | Employee Class 1 NI (fixed thresholds — does not move with the PA) |
+| `dividendTaxOn(salary, divs, pa)` | Dividend tax with band edges `pa + 37700` and `125140`, £500 allowance consumed bottom-up |
+| `corporationTaxOn(profit)` | Corporation tax with marginal relief |
+| `calcStudentLoan(plan, income)` | Student loan repayment via `STUDENT_LOAN_PLANS` |
+
+### The four calculators
 
 | Function | Route | Notes |
 |---|---|---|
 | `calculateIR35()` | Inside IR35 output (screen 9) | full calc incl. pension + student loan |
 | `calculateIR35ForComparison()` | Comparison (screen 29) | assumes £20/wk umbrella, no pension/student loan |
 | `calculateLtdCo()` | Ltd Co output (screen 19) | full calc, per-director |
-| `calculateLtdCoForComparison()` | Comparison (screen 29) | single director at £12,570, expenses excluded |
+| `calculateLtdCoForComparison()` | Comparison (screen 29) | single director on salary = `RATES.personalAllowance`, expenses excluded |
 
-`STUDENT_LOAN_PLANS` is the one genuinely shared constant — both output functions use it via
-`calcStudentLoan()`. The comparison functions deliberately omit student loan deductions.
+The comparison functions deliberately omit student loan deductions.
+
+### Floating-point gotcha in the IR35 pot formula
+`potMultiplier` must be written `1 + (RATES.employerNiRate + RATES.apprenticeshipLevy)` — **with
+the inner brackets**. Without them, `1 + 0.15 + 0.005` evaluates to `1.1549999999999998`
+instead of `1.155`, shifting every Inside IR35 result by a tiny amount.
+
+### Still hardcoded outside `RATES` (UI defaults, not calculations)
+The £12,570 **default salary** shown in the input boxes is still a literal in the HTML
+(`value="12570"` on `ltd-salary` and `dir-salary-loop`) and in the JS that resets or pre-fills
+those inputs. It is only a pre-filled suggestion — it does not affect any calculation — but if
+the personal allowance ever changes, update those defaults too.
 
 ## IR35 calculation logic — critical, do not change without explicit instruction
 
@@ -275,6 +306,8 @@ the pot and be derived from the gross salary.
 5. `grossSalary = (pot + 750) / 1.155`
    - Derived by rearranging: pot = grossSalary × 1.155 − 750
    - Where 1.155 = 1 + 0.15 (Employer NI) + 0.005 (Levy), and 750 = 0.15 × £5,000 threshold
+   - In code these are computed from `RATES` as `niOffset` and `potMultiplier`, so they
+     update automatically if employer NI or the levy changes (see the floating-point gotcha above)
 6. `employerNI = max(0, (grossSalary − 5000) × 0.15)`
 7. `levy = grossSalary × 0.005`
 8. **Sense check must pass:** `grossSalary + employerNI + levy === pot`

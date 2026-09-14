@@ -1392,6 +1392,107 @@ html,body{
 (function(){
 'use strict';
 
+// ============================================================================
+// UK TAX RATES — 2026/27. Single source of truth for every calculation below.
+// When the tax year changes, update the numbers here and nowhere else.
+// Sources: gov.uk "Rates and thresholds for employers 2026 to 2027",
+//          "Corporation Tax rates and allowances", HMRC SL3 deduction tables.
+// ============================================================================
+var RATES = {
+  // Income tax
+  personalAllowance:    12570,
+  paTaperStart:         100000,   // PA reduces by £1 for every £2 above this
+  basicBand:            37700,    // width of the 20% band in TAXABLE income — fixed, never widens
+  additionalThreshold:  125140,   // TOTAL income at which 45% begins (PA is zero by here)
+  basicRate:            0.20,
+  higherRate:           0.40,
+  additionalRate:       0.45,
+
+  // Employee Class 1 NI
+  niPrimaryThreshold:   12570,
+  niUpperEarningsLimit: 50270,
+  niMainRate:           0.08,
+  niUpperRate:          0.02,
+
+  // Employer Class 1 NI
+  employerNiThreshold:  5000,
+  employerNiRate:       0.15,
+  employmentAllowance:  10500,    // 2+ directors only — single-director companies are ineligible
+  apprenticeshipLevy:   0.005,    // Inside IR35 only
+
+  // Corporation tax
+  ctSmallProfitsRate:   0.19,
+  ctMainRate:           0.25,
+  ctLowerLimit:         50000,
+  ctUpperLimit:         250000,
+  ctMarginalFraction:   3 / 200,
+
+  // Dividends
+  dividendAllowance:    500,
+  dividendBasicRate:    0.1075,
+  dividendHigherRate:   0.3575,
+  dividendAdditionalRate: 0.3935,
+
+  // VAT
+  vatStandardRate:      0.20
+};
+
+// Personal allowance after the £100k taper. Math.floor matches HMRC: the reduction
+// is £1 per whole £2. Reaches zero at exactly additionalThreshold.
+function taperedPA(income) {
+  if (income <= RATES.paTaperStart) return RATES.personalAllowance;
+  return Math.max(0, RATES.personalAllowance - Math.floor((income - RATES.paTaperStart) / 2));
+}
+
+// Income tax on salary. `taxable` is income after the allowance; `pa` is the allowance
+// actually applied. The 20% band is a fixed £37,700 of taxable income. The 45% band
+// starts at £125,140 of TOTAL income, which is (125140 − pa) in taxable terms.
+function incomeTaxOn(taxable, pa) {
+  var addlStart = Math.max(RATES.basicBand, RATES.additionalThreshold - pa);
+  var b1 = Math.min(taxable, RATES.basicBand);
+  var b2 = Math.min(Math.max(taxable - RATES.basicBand, 0), Math.max(addlStart - RATES.basicBand, 0));
+  var b3 = Math.max(taxable - addlStart, 0);
+  return b1 * RATES.basicRate + b2 * RATES.higherRate + b3 * RATES.additionalRate;
+}
+
+// Employee Class 1 NI. Thresholds are fixed — unlike income tax they do not move
+// with the personal allowance.
+function employeeNIOn(gross) {
+  var ni = 0;
+  if (gross > RATES.niPrimaryThreshold) {
+    ni += Math.min(gross - RATES.niPrimaryThreshold, RATES.niUpperEarningsLimit - RATES.niPrimaryThreshold) * RATES.niMainRate;
+    if (gross > RATES.niUpperEarningsLimit) ni += (gross - RATES.niUpperEarningsLimit) * RATES.niUpperRate;
+  }
+  return ni;
+}
+
+// Dividend tax. Dividends stack on top of salary. Band edges on TOTAL income are
+// (pa + basicBand) for the higher rate and additionalThreshold for the additional rate.
+// The £500 allowance is taxed at 0% but still uses up band, so it is consumed from the
+// lowest band upward rather than shifting the higher bands down.
+function dividendTaxOn(salary, divs, pa) {
+  var hrThreshold   = pa + RATES.basicBand;
+  var addlThreshold = Math.max(hrThreshold, RATES.additionalThreshold);
+  var inBasic  = Math.max(0, Math.min(salary + divs, hrThreshold)   - Math.max(salary, pa));
+  var inHigher = Math.max(0, Math.min(salary + divs, addlThreshold) - Math.max(salary, hrThreshold));
+  var inAdd    = Math.max(0, (salary + divs) - Math.max(salary, addlThreshold));
+  var allow    = RATES.dividendAllowance;
+  var txBasic  = Math.max(0, inBasic  - allow); allow = Math.max(0, allow - inBasic);
+  var txHigher = Math.max(0, inHigher - allow); allow = Math.max(0, allow - inHigher);
+  var txAdd    = Math.max(0, inAdd    - allow);
+  return txBasic * RATES.dividendBasicRate + txHigher * RATES.dividendHigherRate + txAdd * RATES.dividendAdditionalRate;
+}
+
+// Corporation tax with marginal relief between the lower and upper limits.
+function corporationTaxOn(profit) {
+  if (profit <= 0) return 0;
+  if (profit <= RATES.ctLowerLimit) return profit * RATES.ctSmallProfitsRate;
+  if (profit <= RATES.ctUpperLimit) {
+    return profit * RATES.ctMainRate - (RATES.ctUpperLimit - profit) * RATES.ctMarginalFraction;
+  }
+  return profit * RATES.ctMainRate;
+}
+
 var EXP_CATS = [
   { id:'exp-accounting', label:'Accounting fees' },
   { id:'exp-travel',     label:'Travel' },
@@ -1897,32 +1998,22 @@ function calculateIR35() {
   var umbrellaAnnual = umbrellaWeekly * 52;
 
   // Back-calculate gross salary from the available pot.
-  // Pot = grossSalary × 1.155 − 750  (because employer NI = 15%×gross − 750, levy = 0.5%×gross)
-  // So: grossSalary = (pot + 750) / 1.155
+  // Pot = grossSalary × (1 + employerNiRate + levy) − employerNiRate × employerNiThreshold
+  // So: grossSalary = (pot + niOffset) / potMultiplier   — currently (pot + 750) / 1.155
+  // Note: 1 + (a + b) is written with the inner brackets deliberately. (1 + a) + b gives
+  // 1.1549999999999998 in floating point; 1 + (a + b) gives exactly 1.155.
+  var niOffset      = RATES.employerNiRate * RATES.employerNiThreshold;
+  var potMultiplier = 1 + (RATES.employerNiRate + RATES.apprenticeshipLevy);
   var pot           = annualGross - umbrellaAnnual;
-  var employeeGross = (pot + 750) / 1.155;
-  var employerNI    = Math.max(0, (employeeGross - 5000) * 0.15);
-  var levy          = employeeGross * 0.005;
+  var employeeGross = (pot + niOffset) / potMultiplier;
+  var employerNI    = Math.max(0, (employeeGross - RATES.employerNiThreshold) * RATES.employerNiRate);
+  var levy          = employeeGross * RATES.apprenticeshipLevy;
   // Sense check: employeeGross + employerNI + levy === pot (algebraically exact)
 
-  var pa = 12570;
-  if (employeeGross > 100000) pa = Math.max(0, 12570 - Math.floor((employeeGross - 100000) / 2));
-
-  var taxable = Math.max(0, employeeGross - pa);
-  // The 20% band is a FIXED £37,700 of taxable income — it does not widen when the PA
-  // tapers. The 45% band starts at £125,140 of TOTAL income, i.e. (125140 - pa) taxable.
-  var basicBand = 37700;
-  var addlStart = Math.max(basicBand, 125140 - pa);
-  var b1 = Math.min(taxable, basicBand);
-  var b2 = Math.min(Math.max(taxable - basicBand, 0), Math.max(addlStart - basicBand, 0));
-  var b3 = Math.max(taxable - addlStart, 0);
-  var incomeTax = b1 * 0.20 + b2 * 0.40 + b3 * 0.45;
-
-  var employeeNI = 0;
-  if (employeeGross > 12570) {
-    employeeNI += Math.min(employeeGross - 12570, 37700) * 0.08;
-    if (employeeGross > 50270) employeeNI += (employeeGross - 50270) * 0.02;
-  }
+  var pa         = taperedPA(employeeGross);
+  var taxable    = Math.max(0, employeeGross - pa);
+  var incomeTax  = incomeTaxOn(taxable, pa);
+  var employeeNI = employeeNIOn(employeeGross);
 
   var pension              = employeeGross * (pensionPct / 100);
   var studentLoanRepayment = calcStudentLoan(ans.studentLoan || 'none', employeeGross);
@@ -1944,28 +2035,14 @@ function calculateIR35ForComparison(dayRate, workingDays) {
   var annualGross    = dayRate * workingDays;
   var umbrellaAnnual = 20 * 52; // default: £20/wk umbrella, not user-configurable in comparison
   var pot            = annualGross - umbrellaAnnual;
-  var employeeGross  = (pot + 750) / 1.155;
-  var employerNI     = Math.max(0, (employeeGross - 5000) * 0.15);
-  var levy           = employeeGross * 0.005;
+  var niOffset       = RATES.employerNiRate * RATES.employerNiThreshold;
+  var potMultiplier  = 1 + (RATES.employerNiRate + RATES.apprenticeshipLevy); // see calculateIR35()
+  var employeeGross  = (pot + niOffset) / potMultiplier;
 
-  var pa = 12570;
-  if (employeeGross > 100000) pa = Math.max(0, 12570 - Math.floor((employeeGross - 100000) / 2));
-  if (employeeGross >= 125140) pa = 0;
-
-  var taxable   = Math.max(0, employeeGross - pa);
-  // 20% band is a fixed £37,700 of taxable income; 45% starts at £125,140 total income
-  var basicBand = 37700;
-  var addlStart = Math.max(basicBand, 125140 - pa);
-  var b1 = Math.min(taxable, basicBand);
-  var b2 = Math.min(Math.max(taxable - basicBand, 0), Math.max(addlStart - basicBand, 0));
-  var b3 = Math.max(taxable - addlStart, 0);
-  var incomeTax = b1 * 0.20 + b2 * 0.40 + b3 * 0.45;
-
-  var employeeNI = 0;
-  if (employeeGross > 12570) {
-    employeeNI += Math.min(employeeGross - 12570, 37700) * 0.08;
-    if (employeeGross > 50270) employeeNI += (employeeGross - 50270) * 0.02;
-  }
+  var pa         = taperedPA(employeeGross);
+  var taxable    = Math.max(0, employeeGross - pa);
+  var incomeTax  = incomeTaxOn(taxable, pa);
+  var employeeNI = employeeNIOn(employeeGross);
 
   var netAnnual  = employeeGross - incomeTax - employeeNI;
   var netMonthly = netAnnual / 12;
@@ -1975,51 +2052,19 @@ function calculateIR35ForComparison(dayRate, workingDays) {
 
 function calculateLtdCoForComparison(dayRate, workingDays) {
   var annualGross   = dayRate * workingDays;
-  var salary        = 12570;
-  var empNI         = Math.max(0, (salary - 5000) * 0.15);
+  var salary        = RATES.personalAllowance; // baseline: salary set at the tax-free allowance
+  var empNI         = Math.max(0, (salary - RATES.employerNiThreshold) * RATES.employerNiRate);
   var taxableProfit = annualGross - salary - empNI; // expenses excluded: clean baseline comparison
-
-  var corpTax = 0;
-  if (taxableProfit > 0) {
-    if (taxableProfit <= 50000) {
-      corpTax = taxableProfit * 0.19;
-    } else if (taxableProfit <= 250000) {
-      corpTax = taxableProfit * 0.25 - (250000 - taxableProfit) * (3 / 200);
-    } else {
-      corpTax = taxableProfit * 0.25;
-    }
-  }
+  var corpTax       = corporationTaxOn(taxableProfit);
 
   var dividendsAvailable = Math.max(0, taxableProfit - corpTax);
   var divReceived        = dividendsAvailable;
   var totalIncome        = salary + divReceived;
 
-  var pa = 12570;
-  if (totalIncome > 100000) pa = Math.max(0, 12570 - Math.floor((totalIncome - 100000) / 2));
-  if (totalIncome >= 125140) pa = 0;
-
-  // 20% band is a fixed £37,700 of taxable income. Higher rate starts at (pa + 37700)
-  // of TOTAL income; additional rate at £125,140 of total income.
-  var basicBandWidth = 37700;
-  var hrThreshold    = pa + basicBandWidth;
-  var addlThreshold  = Math.max(hrThreshold, 125140);
-
-  var taxableSalary  = Math.max(0, salary - pa);
-  var addlStart      = Math.max(basicBandWidth, addlThreshold - pa);
-  var salTax = Math.min(taxableSalary, basicBandWidth) * 0.20
-             + Math.min(Math.max(taxableSalary - basicBandWidth, 0), Math.max(addlStart - basicBandWidth, 0)) * 0.40
-             + Math.max(taxableSalary - addlStart, 0) * 0.45;
-
+  var pa        = taperedPA(totalIncome);
+  var salTax    = incomeTaxOn(Math.max(0, salary - pa), pa);
   var netSalary = salary - salTax;
-
-  var divInBasic  = Math.max(0, Math.min(salary + divReceived, hrThreshold)   - Math.max(salary, pa));
-  var divInHigher = Math.max(0, Math.min(salary + divReceived, addlThreshold) - Math.max(salary, hrThreshold));
-  var divInAdd    = Math.max(0, (salary + divReceived) - Math.max(salary, addlThreshold));
-  var allow       = 500;
-  var txBasic     = Math.max(0, divInBasic  - allow); allow = Math.max(0, allow - divInBasic);
-  var txHigher    = Math.max(0, divInHigher - allow); allow = Math.max(0, allow - divInHigher);
-  var txAdd       = Math.max(0, divInAdd    - allow);
-  var divTax      = txBasic * 0.1075 + txHigher * 0.3575 + txAdd * 0.3935;
+  var divTax    = dividendTaxOn(salary, divReceived, pa);
 
   var netTakeHome = netSalary + divReceived - divTax;
   var netMonthly  = netTakeHome / 12;
@@ -2285,29 +2330,21 @@ function calculateLtdCo() {
   var totalPensions = directors.reduce(function(s, d){ return s + d.pensionMonthly * 12; }, 0);
 
   var totalEmployerNI = directors.reduce(function(s, d){
-    return s + Math.max(0, d.salary - 5000) * 0.15;
+    return s + Math.max(0, d.salary - RATES.employerNiThreshold) * RATES.employerNiRate;
   }, 0);
-  var employmentAllowance = numDirs === 1 ? 0 : 10500;
+  var employmentAllowance = numDirs === 1 ? 0 : RATES.employmentAllowance;
   var netEmployerNI = Math.max(0, totalEmployerNI - employmentAllowance);
 
+  // FRS surplus = VAT charged (20% of net) minus flat-rate payment on the VAT-inclusive
+  // gross (120% of net × flat rate). Both figures follow the standard VAT rate.
   var frsSurplus = 0;
   if (ans.vatStatus === 'flatrate') {
     var flatRate = (+document.getElementById('vat-flat-rate').value || 0) / 100;
-    frsSurplus = Math.max(0, annualGross * (0.20 - 1.20 * flatRate));
+    frsSurplus = Math.max(0, annualGross * (RATES.vatStandardRate - (1 + RATES.vatStandardRate) * flatRate));
   }
 
-  var taxableProfit = annualGross - annualExpenses - totalSalaries - totalPensions - netEmployerNI + frsSurplus;
-
-  var corporationTax = 0;
-  if (taxableProfit > 0) {
-    if (taxableProfit <= 50000) {
-      corporationTax = taxableProfit * 0.19;
-    } else if (taxableProfit <= 250000) {
-      corporationTax = taxableProfit * 0.25 - (250000 - taxableProfit) * (3 / 200);
-    } else {
-      corporationTax = taxableProfit * 0.25;
-    }
-  }
+  var taxableProfit  = annualGross - annualExpenses - totalSalaries - totalPensions - netEmployerNI + frsSurplus;
+  var corporationTax = corporationTaxOn(taxableProfit);
 
   var dividendsAvailable = Math.max(0, taxableProfit - corporationTax);
 
@@ -2315,43 +2352,13 @@ function calculateLtdCo() {
     var divReceived = dividendsAvailable * (d.shareholding / 100);
     var totalIncome = d.salary + divReceived;
 
-    var pa = 12570;
-    if (d.employedElsewhere === 'yes') {
-      pa = 0;
-    } else if (totalIncome > 100000) {
-      pa = Math.max(0, 12570 - Math.floor((totalIncome - 100000) / 2));
-    }
+    // Employed elsewhere: the other job is assumed to use the whole personal allowance
+    var pa = d.employedElsewhere === 'yes' ? 0 : taperedPA(totalIncome);
 
-    // 20% band is a fixed £37,700 of taxable income. Higher rate starts at (pa + 37700)
-    // of TOTAL income; additional rate at £125,140 of total income.
-    var basicBandWidth = 37700;
-    var hrThreshold    = pa + basicBandWidth;
-    var addlThreshold  = Math.max(hrThreshold, 125140);
-
-    var taxableSalary  = Math.max(0, d.salary - pa);
-    var addlStart      = Math.max(basicBandWidth, addlThreshold - pa);
-    var salTax = Math.min(taxableSalary, basicBandWidth) * 0.20
-               + Math.min(Math.max(taxableSalary - basicBandWidth, 0), Math.max(addlStart - basicBandWidth, 0)) * 0.40
-               + Math.max(taxableSalary - addlStart, 0) * 0.45;
-
-    var employeeNI = 0;
-    if (d.salary > 12570) {
-      employeeNI += Math.min(d.salary - 12570, 37700) * 0.08;
-      if (d.salary > 50270) employeeNI += (d.salary - 50270) * 0.02;
-    }
-
-    var netSalary = d.salary - salTax - employeeNI;
-
-    var divs           = divReceived;
-    var divInBasic     = Math.max(0, Math.min(d.salary + divs, hrThreshold)   - Math.max(d.salary, pa));
-    var divInHigher    = Math.max(0, Math.min(d.salary + divs, addlThreshold) - Math.max(d.salary, hrThreshold));
-    var divInAdd       = Math.max(0, (d.salary + divs) - Math.max(d.salary, addlThreshold));
-
-    var allow      = 500;
-    var txBasic    = Math.max(0, divInBasic  - allow); allow = Math.max(0, allow - divInBasic);
-    var txHigher   = Math.max(0, divInHigher - allow); allow = Math.max(0, allow - divInHigher);
-    var txAdd      = Math.max(0, divInAdd    - allow);
-    var divTax     = txBasic * 0.1075 + txHigher * 0.3575 + txAdd * 0.3935;
+    var salTax     = incomeTaxOn(Math.max(0, d.salary - pa), pa);
+    var employeeNI = employeeNIOn(d.salary);
+    var netSalary  = d.salary - salTax - employeeNI;
+    var divTax     = dividendTaxOn(d.salary, divReceived, pa);
 
     var studentLoanRepayment = calcStudentLoan(d.studentLoan || 'none', d.salary + divReceived);
     return {
