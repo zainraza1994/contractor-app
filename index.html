@@ -1404,11 +1404,12 @@ var EXP_CATS = [
   { id:'exp-misc',       label:'Miscellaneous' }
 ];
 
+// 2026/27 thresholds — source: HMRC SL3 Student and Postgraduate Loan deduction tables
 var STUDENT_LOAN_PLANS = {
   none:    { threshold: 0,     rate: 0    },
-  plan1:   { threshold: 24990, rate: 0.09 },
-  plan2:   { threshold: 27295, rate: 0.09 },
-  plan4:   { threshold: 31395, rate: 0.09 },
+  plan1:   { threshold: 26900, rate: 0.09 },
+  plan2:   { threshold: 29385, rate: 0.09 },
+  plan4:   { threshold: 33795, rate: 0.09 },
   plan5:   { threshold: 25000, rate: 0.09 },
   postgrad:{ threshold: 21000, rate: 0.06 }
 };
@@ -1908,11 +1909,13 @@ function calculateIR35() {
   if (employeeGross > 100000) pa = Math.max(0, 12570 - Math.floor((employeeGross - 100000) / 2));
 
   var taxable = Math.max(0, employeeGross - pa);
-  // basicBand adjusts dynamically: when PA tapers, the 20% band widens toward £50,270
-  var basicBand = Math.max(0, 50270 - pa);
+  // The 20% band is a FIXED £37,700 of taxable income — it does not widen when the PA
+  // tapers. The 45% band starts at £125,140 of TOTAL income, i.e. (125140 - pa) taxable.
+  var basicBand = 37700;
+  var addlStart = Math.max(basicBand, 125140 - pa);
   var b1 = Math.min(taxable, basicBand);
-  var b2 = Math.min(Math.max(taxable - basicBand, 0), 74870);
-  var b3 = Math.max(taxable - (basicBand + 74870), 0);
+  var b2 = Math.min(Math.max(taxable - basicBand, 0), Math.max(addlStart - basicBand, 0));
+  var b3 = Math.max(taxable - addlStart, 0);
   var incomeTax = b1 * 0.20 + b2 * 0.40 + b3 * 0.45;
 
   var employeeNI = 0;
@@ -1950,10 +1953,12 @@ function calculateIR35ForComparison(dayRate, workingDays) {
   if (employeeGross >= 125140) pa = 0;
 
   var taxable   = Math.max(0, employeeGross - pa);
-  var basicBand = Math.max(0, 50270 - pa);
+  // 20% band is a fixed £37,700 of taxable income; 45% starts at £125,140 total income
+  var basicBand = 37700;
+  var addlStart = Math.max(basicBand, 125140 - pa);
   var b1 = Math.min(taxable, basicBand);
-  var b2 = Math.min(Math.max(taxable - basicBand, 0), 74870);
-  var b3 = Math.max(taxable - (basicBand + 74870), 0);
+  var b2 = Math.min(Math.max(taxable - basicBand, 0), Math.max(addlStart - basicBand, 0));
+  var b3 = Math.max(taxable - addlStart, 0);
   var incomeTax = b1 * 0.20 + b2 * 0.40 + b3 * 0.45;
 
   var employeeNI = 0;
@@ -1993,17 +1998,23 @@ function calculateLtdCoForComparison(dayRate, workingDays) {
   if (totalIncome > 100000) pa = Math.max(0, 12570 - Math.floor((totalIncome - 100000) / 2));
   if (totalIncome >= 125140) pa = 0;
 
+  // 20% band is a fixed £37,700 of taxable income. Higher rate starts at (pa + 37700)
+  // of TOTAL income; additional rate at £125,140 of total income.
+  var basicBandWidth = 37700;
+  var hrThreshold    = pa + basicBandWidth;
+  var addlThreshold  = Math.max(hrThreshold, 125140);
+
   var taxableSalary  = Math.max(0, salary - pa);
-  var basicBandWidth = Math.max(0, 50270 - pa);
+  var addlStart      = Math.max(basicBandWidth, addlThreshold - pa);
   var salTax = Math.min(taxableSalary, basicBandWidth) * 0.20
-             + Math.min(Math.max(taxableSalary - basicBandWidth, 0), 74870) * 0.40
-             + Math.max(taxableSalary - basicBandWidth - 74870, 0) * 0.45;
+             + Math.min(Math.max(taxableSalary - basicBandWidth, 0), Math.max(addlStart - basicBandWidth, 0)) * 0.40
+             + Math.max(taxableSalary - addlStart, 0) * 0.45;
 
   var netSalary = salary - salTax;
 
-  var divInBasic  = Math.max(0, Math.min(salary + divReceived, 50270)  - Math.max(salary, pa));
-  var divInHigher = Math.max(0, Math.min(salary + divReceived, 125140) - Math.max(salary, 50270));
-  var divInAdd    = Math.max(0, (salary + divReceived) - Math.max(salary, 125140));
+  var divInBasic  = Math.max(0, Math.min(salary + divReceived, hrThreshold)   - Math.max(salary, pa));
+  var divInHigher = Math.max(0, Math.min(salary + divReceived, addlThreshold) - Math.max(salary, hrThreshold));
+  var divInAdd    = Math.max(0, (salary + divReceived) - Math.max(salary, addlThreshold));
   var allow       = 500;
   var txBasic     = Math.max(0, divInBasic  - allow); allow = Math.max(0, allow - divInBasic);
   var txHigher    = Math.max(0, divInHigher - allow); allow = Math.max(0, allow - divInHigher);
@@ -2311,11 +2322,17 @@ function calculateLtdCo() {
       pa = Math.max(0, 12570 - Math.floor((totalIncome - 100000) / 2));
     }
 
+    // 20% band is a fixed £37,700 of taxable income. Higher rate starts at (pa + 37700)
+    // of TOTAL income; additional rate at £125,140 of total income.
+    var basicBandWidth = 37700;
+    var hrThreshold    = pa + basicBandWidth;
+    var addlThreshold  = Math.max(hrThreshold, 125140);
+
     var taxableSalary  = Math.max(0, d.salary - pa);
-    var basicBandWidth = Math.max(0, 50270 - pa);
+    var addlStart      = Math.max(basicBandWidth, addlThreshold - pa);
     var salTax = Math.min(taxableSalary, basicBandWidth) * 0.20
-               + Math.min(Math.max(taxableSalary - basicBandWidth, 0), 74870) * 0.40
-               + Math.max(taxableSalary - basicBandWidth - 74870, 0) * 0.45;
+               + Math.min(Math.max(taxableSalary - basicBandWidth, 0), Math.max(addlStart - basicBandWidth, 0)) * 0.40
+               + Math.max(taxableSalary - addlStart, 0) * 0.45;
 
     var employeeNI = 0;
     if (d.salary > 12570) {
@@ -2326,9 +2343,9 @@ function calculateLtdCo() {
     var netSalary = d.salary - salTax - employeeNI;
 
     var divs           = divReceived;
-    var divInBasic     = Math.max(0, Math.min(d.salary + divs, 50270)  - Math.max(d.salary, pa));
-    var divInHigher    = Math.max(0, Math.min(d.salary + divs, 125140) - Math.max(d.salary, 50270));
-    var divInAdd       = Math.max(0, (d.salary + divs) - Math.max(d.salary, 125140));
+    var divInBasic     = Math.max(0, Math.min(d.salary + divs, hrThreshold)   - Math.max(d.salary, pa));
+    var divInHigher    = Math.max(0, Math.min(d.salary + divs, addlThreshold) - Math.max(d.salary, hrThreshold));
+    var divInAdd       = Math.max(0, (d.salary + divs) - Math.max(d.salary, addlThreshold));
 
     var allow      = 500;
     var txBasic    = Math.max(0, divInBasic  - allow); allow = Math.max(0, allow - divInBasic);

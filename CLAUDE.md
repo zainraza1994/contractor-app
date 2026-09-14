@@ -35,9 +35,11 @@ and a combined total take-home across all directors.
 - Class 2 NI: voluntary only, do not include by default
 
 ## Student loan repayment rates — 2026/27
-- Plan 1: 9% above £24,990
-- Plan 2: 9% above £27,295
-- Plan 4: 9% above £31,395
+Source: HMRC SL3 Student and Postgraduate Loan deduction tables, 2026 to 2027.
+These thresholds are uprated most Aprils — re-verify them at the start of each tax year.
+- Plan 1: 9% above £26,900
+- Plan 2: 9% above £29,385
+- Plan 4: 9% above £33,795
 - Plan 5: 9% above £25,000
 - Postgraduate Loan: 6% above £21,000
 - Income base: grossSalary for Inside IR35; salary + dividendsReceived per director for Ltd Co
@@ -231,7 +233,32 @@ Card order (top to bottom):
 - **VAT Flat Rate Surplus:** `frsSurplus = max(0, annualGross × (0.20 − 1.20 × flatRate))`. Only computed when `ans.vatStatus === 'flatrate'`. Added to `taxableProfit` before corporation tax (it is genuine company profit subject to CT). Stored as `ltdCalcResult.frsSurplus`.
 - **Dividends:** each director receives `dividendsAvailable × (shareholding / 100)`.
 - **PA tapering** applies per director based on their individual `salary + dividendsReceived`.
+- **Dividend band thresholds are derived from the PA, not hardcoded.** Each director's
+  thresholds on **total** income are `hrThreshold = pa + 37700` and `addlThreshold = 125140`.
+  Dividends stack on top of salary, so the split is:
+  ```
+  divInBasic  = max(0, min(salary + divs, hrThreshold)   − max(salary, pa))
+  divInHigher = max(0, min(salary + divs, addlThreshold) − max(salary, hrThreshold))
+  divInAdd    = max(0, (salary + divs) − max(salary, addlThreshold))
+  ```
+  The £500 dividend allowance is applied band-by-band from the bottom up. It is taxed at 0%
+  but still consumes band, which is why it is subtracted from each band's taxable amount
+  rather than shifting the higher bands down.
 - **Effective rate** = `totalTaxPaid / annualGross × 100` where `totalTaxPaid = annualGross − totalNetTakeHome`.
+
+### Rate constants are duplicated across four functions — keep them in sync
+There is no shared rates object. The same rates are hardcoded in all four of these, and a
+rate fixed in one but not the others makes the comparison screen disagree with the output screen:
+
+| Function | Route | Notes |
+|---|---|---|
+| `calculateIR35()` | Inside IR35 output (screen 9) | full calc incl. pension + student loan |
+| `calculateIR35ForComparison()` | Comparison (screen 29) | assumes £20/wk umbrella, no pension/student loan |
+| `calculateLtdCo()` | Ltd Co output (screen 19) | full calc, per-director |
+| `calculateLtdCoForComparison()` | Comparison (screen 29) | single director at £12,570, expenses excluded |
+
+`STUDENT_LOAN_PLANS` is the one genuinely shared constant — both output functions use it via
+`calcStudentLoan()`. The comparison functions deliberately omit student loan deductions.
 
 ## IR35 calculation logic — critical, do not change without explicit instruction
 
@@ -252,20 +279,31 @@ the pot and be derived from the gross salary.
 7. `levy = grossSalary × 0.005`
 8. **Sense check must pass:** `grossSalary + employerNI + levy === pot`
 
-### Income tax — band widths adjust with the personal allowance
+### Income tax — the 20% band is a FIXED £37,700 of taxable income
 
-The basic rate band width is not a fixed £37,700. It depends on the actual PA:
+The basic rate band is always £37,700 of taxable income. It does **not** widen when the
+personal allowance tapers. HMRC fixes the band at £37,700 and stacks it on top of whatever
+personal allowance the person actually has, so the higher-rate threshold is `pa + 37,700`
+of total income — £50,270 at the standard PA, but only £37,700 once the PA reaches zero.
+
+The 45% band starts at £125,140 of **total** income, which is `125140 − pa` in taxable terms.
 
 ```
-basicBand = max(0, 50270 − pa)          // £37,700 at standard PA; £50,270 when PA = 0
-b1 = min(taxable, basicBand)            // 20%
-b2 = min(max(taxable − basicBand, 0), 74870)   // 40%
-b3 = max(taxable − (basicBand + 74870), 0)     // 45%
+basicBand = 37700                       // fixed, never varies
+addlStart = max(37700, 125140 − pa)     // taxable income at which 45% begins
+b1 = min(taxable, basicBand)                                        // 20%
+b2 = min(max(taxable − basicBand, 0), max(addlStart − basicBand, 0)) // 40%
+b3 = max(taxable − addlStart, 0)                                     // 45%
 ```
 
-This matters whenever gross salary exceeds £100,000, because the personal allowance tapers
-(−£1 per £2 over £100,000) and the 20% band widens accordingly. Hardcoding 37,700 produces
-a significant under-calculation of income tax for higher earners.
+> **Corrected 2026-09-14.** This section previously documented `basicBand = max(0, 50270 − pa)`
+> and claimed a fixed £37,700 would under-calculate tax. That was backwards: the old formula
+> widened the 20% band to £50,270 once the PA tapered to zero, **under-taxing anyone earning
+> over £100,000 by up to £2,514**. Verified against published HMRC figures: £100,000 → £27,432,
+> £110,000 → £33,432, £125,140 → £42,516, £150,000 → £53,703.
+
+The same `pa + 37700` threshold governs how dividends are split across bands in the Ltd Co
+route — see the dividend note below. Do not reintroduce a hardcoded £50,270 in either place.
 
 ### Personal allowance tapering
 
@@ -293,10 +331,14 @@ The card label "Effective Tax Rate" uses this definition per the project spec.
 | Employer NI | ~£20,576 |
 | Apprenticeship Levy | ~£711 |
 | Sense check (gross + NI + levy) | £163,460 ✓ |
-| Income tax | ~£47,667 |
+| Income tax | ~£50,181 |
 | Employee NI | ~£4,854 |
-| Net annual | ~£89,652 |
-| Effective rate | ~54.5% |
+| Net annual | ~£87,138 |
+| Effective rate | ~52.97% |
+
+Income tax, net annual and effective rate were **revised on 2026-09-14** when the basic-rate
+band bug was fixed (previously ~£47,667 / ~£89,652 / ~54.5%). Gross salary £142,173 has a
+tapered PA of £0, so this case exercises the corrected band logic directly.
 
 ## Disclaimer (always present on output screens)
 "This calculator provides estimates only and does not constitute financial or tax advice.

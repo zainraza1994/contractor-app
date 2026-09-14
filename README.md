@@ -48,8 +48,12 @@ docs/
 ## Tax rates used (2026/27)
 
 - Personal Allowance: £12,570 (tapers above £100,000, eliminated above £125,140)
-- Income Tax: 20% / 40% / 45%
+- Income Tax: 20% / 40% / 45% — the 20% band is a fixed £37,700 of taxable income, so the
+  higher-rate threshold is `Personal Allowance + £37,700` (£50,270 normally, £37,700 once the
+  allowance has tapered to zero)
 - Employee NI: 8% on £12,570–£50,270, 2% above
+- Student loans: Plan 1 9% above £26,900 · Plan 2 9% above £29,385 · Plan 4 9% above £33,795 ·
+  Plan 5 9% above £25,000 · Postgraduate 6% above £21,000
 - Employer NI: 15% above £5,000/year secondary threshold
 - Apprenticeship Levy: 0.5% of gross salary (Inside IR35 only)
 - Corporation Tax: 19% under £50k / marginal relief £50k–£250k / 25% above £250k
