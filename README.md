@@ -80,7 +80,7 @@ apprenticeship levy = gross salary × 0.5%
 ✓ sense check: gross salary + employer NI + levy = pot
 ```
 
-Income tax uses dynamic band widths that adjust when the personal allowance tapers above £100,000. Pension is treated as **salary sacrifice**: it comes off gross salary first, and income tax, employee NI and student loan are then calculated on what's left (shown on the output screen as the "Gross Salary" card). Those deductions are taken off to arrive at net take-home. Employer NI is not reduced by the sacrifice, so the estimate is slightly conservative.
+Income tax uses a fixed £37,700 basic-rate band stacked on top of whatever personal allowance remains, so the 40% rate starts earlier once the allowance tapers above £100,000. Pension is treated as **salary sacrifice**: it comes off gross salary first, and income tax, employee NI and student loan are then calculated on what's left (shown on the output screen as the "Gross Salary" card). Those deductions are taken off to arrive at net take-home. Employer NI is not reduced by the sacrifice, so the estimate is slightly conservative.
 
 The **Effective Rate** shown on the output screen is `net annual ÷ gross contract value × 100` — i.e. the percentage of total contract income the contractor actually keeps.
 
