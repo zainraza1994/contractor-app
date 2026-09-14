@@ -42,7 +42,7 @@ These thresholds are uprated most Aprils — re-verify them at the start of each
 - Plan 4: 9% above £33,795
 - Plan 5: 9% above £25,000
 - Postgraduate Loan: 6% above £21,000
-- Income base: grossSalary for Inside IR35; salary + dividendsReceived per director for Ltd Co
+- Income base: taxableSalary (gross salary after salary-sacrifice pension) for Inside IR35; salary + dividendsReceived per director for Ltd Co
 - Do not include student loan in the sense check or pot calculation — it is deducted after net salary is calculated
 
 ## Design rules — never change these
@@ -138,7 +138,7 @@ The JavaScript uses a **history-stack navigation** — not a linear index. Key p
 | 7 | screen-7 | Pension % (conditional — only if pension=yes) |
 | 8  | screen-8  | Employed elsewhere? Yes/No + warning banner if yes |
 | 26 | screen-26 | Student loan? (6-card 2-col grid: No/Plan1/Plan2/Plan4/Plan5/Postgrad) |
-| 9  | screen-9  | IR35 output — full calculated breakdown |
+| 9  | screen-9  | IR35 output — card order: Net Monthly, Effective Tax Rate, Gross Contract Value, Umbrella Fee, Employer NI, Apprenticeship Levy, Pension Contribution (`#o-pension-row`, hidden if no pension), **Gross Salary** (`#o-taxable-salary` = `taxableSalary`), Employee NI, Income Tax, Student Loan (hidden if none) |
 
 ## Screen map — Outside IR35 Ltd Co (screens 10–25)
 
@@ -311,6 +311,17 @@ the pot and be derived from the gross salary.
 6. `employerNI = max(0, (grossSalary − 5000) × 0.15)`
 7. `levy = grossSalary × 0.005`
 8. **Sense check must pass:** `grossSalary + employerNI + levy === pot`
+9. `pension = grossSalary × pensionPct / 100` — **salary sacrifice** (added 2026-09-14)
+10. `taxableSalary = grossSalary − pension`
+11. Personal allowance taper, income tax, employee NI and student loan are all calculated on
+    `taxableSalary` (not `grossSalary`)
+12. `netAnnual = taxableSalary − incomeTax − employeeNI − studentLoan` — pension is **not**
+    subtracted again here
+
+**Salary sacrifice simplification:** employer NI and the levy (steps 6–7) stay based on
+`grossSalary`. In reality sacrifice also lowers employer NI and some umbrellas pass that saving
+back, but modelling it is circular (employer NI feeds the pot back-calculation). The result is a
+slightly conservative take-home. `calculateIR35ForComparison()` has no pension, so it is unaffected.
 
 ### Income tax — the 20% band is a FIXED £37,700 of taxable income
 
@@ -342,9 +353,10 @@ route — see the dividend note below. Do not reintroduce a hardcoded £50,270 i
 
 ```
 pa = 12570
-if grossSalary > 100000: pa = max(0, 12570 − floor((grossSalary − 100000) / 2))
-if grossSalary ≥ 125140: pa = 0
+if taxableSalary > 100000: pa = max(0, 12570 − floor((taxableSalary − 100000) / 2))
+if taxableSalary ≥ 125140: pa = 0
 ```
+(`taxableSalary` equals `grossSalary` when there is no pension.)
 
 ### Effective rate (output screen)
 
@@ -372,6 +384,21 @@ The card label "Effective Tax Rate" uses this definition per the project spec.
 Income tax, net annual and effective rate were **revised on 2026-09-14** when the basic-rate
 band bug was fixed (previously ~£47,667 / ~£89,652 / ~54.5%). Gross salary £142,173 has a
 tapered PA of £0, so this case exercises the corrected band logic directly.
+
+### Validation test case — same inputs with 5% pension (salary sacrifice)
+
+| Metric | Expected |
+|--------|----------|
+| Gross salary | ~£142,173 |
+| Pension (5%) | ~£7,109 |
+| Taxable salary ("Gross Salary" card) | ~£135,065 |
+| Sense check (gross + NI + levy) | £163,460 ✓ (unchanged) |
+| Income tax | ~£46,982 |
+| Employee NI | ~£4,712 |
+| Net annual | ~£83,371 |
+| Effective rate | ~50.68% |
+
+With Plan 2 student loan added: repayment ~£9,511 (on taxable salary), net ~£73,859.
 
 ## Disclaimer (always present on output screens)
 "This calculator provides estimates only and does not constitute financial or tax advice.

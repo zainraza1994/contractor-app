@@ -615,6 +615,18 @@ html,body{
       <div class="o-sub">0.5% of gross</div>
     </div>
 
+    <div class="out-card" id="o-pension-row">
+      <div class="o-lbl">Pension Contribution</div>
+      <div class="o-val neg" id="o-pension">-£0</div>
+      <div class="o-sub" id="o-pension-sub"></div>
+    </div>
+
+    <div class="out-card">
+      <div class="o-lbl">Gross Salary</div>
+      <div class="o-val pos" id="o-taxable-salary">£0</div>
+      <div class="o-sub" id="o-taxable-salary-sub">the salary you're taxed on</div>
+    </div>
+
     <div class="out-card">
       <div class="o-lbl">Employee NI</div>
       <div class="o-val neg" id="o-employee-ni">-£0</div>
@@ -625,12 +637,6 @@ html,body{
       <div class="o-lbl">Income Tax</div>
       <div class="o-val neg" id="o-income-tax">-£0</div>
       <div class="o-sub">2026/27 rates, personal allowance applied</div>
-    </div>
-
-    <div class="out-card" id="o-pension-row">
-      <div class="o-lbl">Pension Contribution</div>
-      <div class="o-val neg" id="o-pension">-£0</div>
-      <div class="o-sub" id="o-pension-sub"></div>
     </div>
 
     <div class="out-card" id="o-student-loan-row">
@@ -2010,21 +2016,26 @@ function calculateIR35() {
   var levy          = employeeGross * RATES.apprenticeshipLevy;
   // Sense check: employeeGross + employerNI + levy === pot (algebraically exact)
 
-  var pa         = taperedPA(employeeGross);
-  var taxable    = Math.max(0, employeeGross - pa);
-  var incomeTax  = incomeTaxOn(taxable, pa);
-  var employeeNI = employeeNIOn(employeeGross);
+  // Pension is salary sacrifice: it comes off before income tax, employee NI and student loan.
+  // Employer NI and levy above stay based on employeeGross (simplification — any employer NI
+  // saving an umbrella might pass back is not modelled).
+  var pension       = employeeGross * (pensionPct / 100);
+  var taxableSalary = employeeGross - pension;
 
-  var pension              = employeeGross * (pensionPct / 100);
-  var studentLoanRepayment = calcStudentLoan(ans.studentLoan || 'none', employeeGross);
-  var netAnnual            = employeeGross - incomeTax - employeeNI - pension - studentLoanRepayment;
+  var pa         = taperedPA(taxableSalary);
+  var taxable    = Math.max(0, taxableSalary - pa);
+  var incomeTax  = incomeTaxOn(taxable, pa);
+  var employeeNI = employeeNIOn(taxableSalary);
+
+  var studentLoanRepayment = calcStudentLoan(ans.studentLoan || 'none', taxableSalary);
+  var netAnnual            = taxableSalary - incomeTax - employeeNI - studentLoanRepayment;
   var netMonthly           = netAnnual / 12;
   // Spec: "Effective rate = Net ÷ Gross Contract Value × 100"
   var effRate              = annualGross > 0 ? (netAnnual / annualGross) * 100 : 0;
 
   return {
     annualGross:annualGross, workingDays:workingDays, umbrellaAnnual:umbrellaAnnual,
-    employerNI:employerNI, levy:levy, employeeGross:employeeGross,
+    employerNI:employerNI, levy:levy, employeeGross:employeeGross, taxableSalary:taxableSalary,
     incomeTax:incomeTax, employeeNI:employeeNI, pension:pension,
     studentLoanRepayment:studentLoanRepayment,
     netAnnual:netAnnual, netMonthly:netMonthly, effRate:effRate
@@ -2168,9 +2179,11 @@ function renderOutput() {
     pensionRow.style.display = ans.pension === 'yes' ? '' : 'none';
     if (ans.pension === 'yes') {
       var psub = document.getElementById('o-pension-sub');
-      if (psub) psub.textContent = document.getElementById('pension-pct').value + '% of employee gross';
+      if (psub) psub.textContent = document.getElementById('pension-pct').value + '% salary sacrifice — taken off before tax';
     }
   }
+  var tsSub = document.getElementById('o-taxable-salary-sub');
+  if (tsSub) tsSub.textContent = ans.pension === 'yes' ? "the salary you're taxed on, after pension" : "the salary you're taxed on";
   var slRow = document.getElementById('o-student-loan-row');
   if (slRow) {
     var showSl = r.studentLoanRepayment > 0;
@@ -2187,7 +2200,7 @@ function renderOutput() {
 
 /* ── count-up ── */
 function resetNums() {
-  ['o-gross','o-umbrella','o-employer-ni','o-levy','o-employee-ni',
+  ['o-gross','o-umbrella','o-employer-ni','o-levy','o-taxable-salary','o-employee-ni',
    'o-income-tax','o-pension','o-student-loan','o-net-annual','o-net-monthly'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.textContent = '£0';
@@ -2234,9 +2247,10 @@ function countUp() {
       { id:'o-umbrella',     val:r.umbrellaAnnual,       neg:true  },
       { id:'o-employer-ni',  val:r.employerNI,           neg:true  },
       { id:'o-levy',         val:r.levy,                 neg:true  },
+      { id:'o-pension',      val:r.pension,              neg:true  },
+      { id:'o-taxable-salary', val:r.taxableSalary,      neg:false },
       { id:'o-employee-ni',  val:r.employeeNI,           neg:true  },
       { id:'o-income-tax',   val:r.incomeTax,            neg:true  },
-      { id:'o-pension',      val:r.pension,              neg:true  },
       { id:'o-student-loan', val:r.studentLoanRepayment, neg:true  },
       { id:'o-net-annual',   val:r.netAnnual,            neg:false },
       { id:'o-net-monthly',  val:r.netMonthly,           neg:false },
