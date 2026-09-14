@@ -73,7 +73,7 @@ These thresholds are uprated most Aprils — re-verify them at the start of each
 
 ## Deployment
 - GitHub Pages — every push to main goes live automatically
-- Live URL: [add your GitHub Pages URL here once set up]
+- Live URL: https://zainraza1994.github.io/contractor-app/
 
 ## Key rules when making changes
 - Never change the tax rates without being explicitly asked
