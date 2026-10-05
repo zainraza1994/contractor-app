@@ -1104,7 +1104,7 @@ html,body{
     <div class="card" data-group="studentLoan" data-value="plan1" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 1</div>
-        <div class="c-desc">£24,990 · 9%</div>
+        <div class="c-desc">£26,900 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1115,7 +1115,7 @@ html,body{
     <div class="card" data-group="studentLoan" data-value="plan2" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 2</div>
-        <div class="c-desc">£27,295 · 9%</div>
+        <div class="c-desc">£29,385 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1126,7 +1126,7 @@ html,body{
     <div class="card" data-group="studentLoan" data-value="plan4" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 4</div>
-        <div class="c-desc">£31,395 · 9%</div>
+        <div class="c-desc">£33,795 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1180,7 +1180,7 @@ html,body{
     <div class="card" data-group="studentLoan" data-value="plan1" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 1</div>
-        <div class="c-desc">£24,990 · 9%</div>
+        <div class="c-desc">£26,900 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1191,7 +1191,7 @@ html,body{
     <div class="card" data-group="studentLoan" data-value="plan2" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 2</div>
-        <div class="c-desc">£27,295 · 9%</div>
+        <div class="c-desc">£29,385 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1202,7 +1202,7 @@ html,body{
     <div class="card" data-group="studentLoan" data-value="plan4" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 4</div>
-        <div class="c-desc">£31,395 · 9%</div>
+        <div class="c-desc">£33,795 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1256,7 +1256,7 @@ html,body{
     <div class="card" data-group="dirStudentLoan" data-value="plan1" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 1</div>
-        <div class="c-desc">£24,990 · 9%</div>
+        <div class="c-desc">£26,900 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1267,7 +1267,7 @@ html,body{
     <div class="card" data-group="dirStudentLoan" data-value="plan2" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 2</div>
-        <div class="c-desc">£27,295 · 9%</div>
+        <div class="c-desc">£29,385 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1278,7 +1278,7 @@ html,body{
     <div class="card" data-group="dirStudentLoan" data-value="plan4" onclick="pickCard(this)">
       <div class="card-body">
         <div class="c-title">Plan 4</div>
-        <div class="c-desc">£31,395 · 9%</div>
+        <div class="c-desc">£33,795 · 9%</div>
       </div>
       <div class="c-icon">
         <svg class="ico-chk" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1527,6 +1527,17 @@ function calcStudentLoan(plan, income) {
   return Math.max(0, (income - p.threshold) * p.rate);
 }
 
+// Writes the "£26,900 · 9%" line on every student loan card (screens 26, 27, 28)
+// from STUDENT_LOAN_PLANS, so the cards can never show a different figure to the one calculated.
+function renderStudentLoanLabels() {
+  [].forEach.call(document.querySelectorAll('[data-group="studentLoan"], [data-group="dirStudentLoan"]'), function(c){
+    var p = STUDENT_LOAN_PLANS[c.dataset.value];
+    var desc = c.querySelector('.c-desc');
+    if (!p || !p.rate || !desc) return;
+    desc.textContent = '£' + p.threshold.toLocaleString('en-GB') + ' · ' + (Math.round(p.rate * 1000) / 10) + '%';
+  });
+}
+
 function getExpTotal() {
   return EXP_CATS.reduce(function(s, c) {
     var el = document.getElementById(c.id);
@@ -1657,6 +1668,7 @@ function getNextScreen(idx) {
 screens.forEach(function(s,i){
   s.style.transform = i===0 ? 'translateX(0)' : 'translateX(100%)';
 });
+renderStudentLoanLabels();
 syncUI();
 
 function goTo(idx, dir) {

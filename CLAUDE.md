@@ -44,6 +44,11 @@ These thresholds are uprated most Aprils — re-verify them at the start of each
 - Postgraduate Loan: 6% above £21,000
 - Income base: taxableSalary (gross salary after salary-sacrifice pension) for Inside IR35; salary + dividendsReceived per director for Ltd Co
 - Do not include student loan in the sense check or pot calculation — it is deducted after net salary is calculated
+- The "£26,900 · 9%" line on each student loan card (screens 26, 27, 28) is written at startup by
+  `renderStudentLoanLabels()` from `STUDENT_LOAN_PLANS`, so the cards always show the figure the
+  calculation uses. The same text in the HTML is only a fallback — do not rely on editing it.
+  (Added 2026-10-05: the cards had been left showing old thresholds — £24,990 / £27,295 / £31,395 —
+  while the calculation used the correct ones.)
 
 ## Design rules — never change these
 - Background: deep navy #0D1B2A
