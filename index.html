@@ -1476,9 +1476,16 @@ function employeeNIOn(gross) {
 // (pa + basicBand) for the higher rate and additionalThreshold for the additional rate.
 // The £500 allowance is taxed at 0% but still uses up band, so it is consumed from the
 // lowest band upward rather than shifting the higher bands down.
-function dividendTaxOn(salary, divs, pa) {
+//
+// Returns one row per slice of the dividend: { note, amount, rate, tax }. The amounts
+// always add up to `divs`. Rows with a zero amount are kept so the list has a fixed
+// shape — the output screen filters them out. This is the ONLY place dividend tax is
+// worked out: dividendTaxOn() just adds up the `tax` column, so the breakdown shown on
+// screen can never disagree with the total.
+function dividendBandsOn(salary, divs, pa) {
   var hrThreshold   = pa + RATES.basicBand;
   var addlThreshold = Math.max(hrThreshold, RATES.additionalThreshold);
+  var inPA     = Math.max(0, Math.min(salary + divs, pa) - salary); // covered by unused personal allowance
   var inBasic  = Math.max(0, Math.min(salary + divs, hrThreshold)   - Math.max(salary, pa));
   var inHigher = Math.max(0, Math.min(salary + divs, addlThreshold) - Math.max(salary, hrThreshold));
   var inAdd    = Math.max(0, (salary + divs) - Math.max(salary, addlThreshold));
@@ -1486,7 +1493,18 @@ function dividendTaxOn(salary, divs, pa) {
   var txBasic  = Math.max(0, inBasic  - allow); allow = Math.max(0, allow - inBasic);
   var txHigher = Math.max(0, inHigher - allow); allow = Math.max(0, allow - inHigher);
   var txAdd    = Math.max(0, inAdd    - allow);
-  return txBasic * RATES.dividendBasicRate + txHigher * RATES.dividendHigherRate + txAdd * RATES.dividendAdditionalRate;
+  var allowUsed = (inBasic - txBasic) + (inHigher - txHigher) + (inAdd - txAdd);
+  return [
+    { note:'personal allowance', amount:inPA,      rate:0,                            tax:0 },
+    { note:'dividend allowance', amount:allowUsed, rate:0,                            tax:0 },
+    { note:'',                   amount:txBasic,   rate:RATES.dividendBasicRate,      tax:txBasic  * RATES.dividendBasicRate },
+    { note:'',                   amount:txHigher,  rate:RATES.dividendHigherRate,     tax:txHigher * RATES.dividendHigherRate },
+    { note:'',                   amount:txAdd,     rate:RATES.dividendAdditionalRate, tax:txAdd    * RATES.dividendAdditionalRate }
+  ];
+}
+
+function dividendTaxOn(salary, divs, pa) {
+  return dividendBandsOn(salary, divs, pa).reduce(function(s, b){ return s + b.tax; }, 0);
 }
 
 // Corporation tax with marginal relief between the lower and upper limits.
@@ -2384,7 +2402,8 @@ function calculateLtdCo() {
     var salTax     = incomeTaxOn(Math.max(0, d.salary - pa), pa);
     var employeeNI = employeeNIOn(d.salary);
     var netSalary  = d.salary - salTax - employeeNI;
-    var divTax     = dividendTaxOn(d.salary, divReceived, pa);
+    var divBands   = dividendBandsOn(d.salary, divReceived, pa);
+    var divTax     = divBands.reduce(function(s, b){ return s + b.tax; }, 0);
 
     var studentLoanRepayment = calcStudentLoan(d.studentLoan || 'none', d.salary + divReceived);
     return {
@@ -2398,13 +2417,18 @@ function calculateLtdCo() {
       employeeNI:            employeeNI,
       netSalary:             netSalary,
       divTax:                divTax,
+      divBands:              divBands,
       studentLoanRepayment:  studentLoanRepayment,
       netTakeHome:           netSalary + divReceived - divTax - studentLoanRepayment
     };
   });
 
   var totalNetTakeHome = dirResults.reduce(function(s, d){ return s + d.netTakeHome; }, 0);
-  var totalTaxPaid     = annualGross - totalNetTakeHome;
+  // Actual taxes only. Expenses, pensions and student loan repayments reduce take-home
+  // but are not tax, so this is deliberately NOT annualGross − totalNetTakeHome.
+  var totalTaxPaid     = corporationTax + netEmployerNI + dirResults.reduce(function(s, d){
+    return s + d.incomeTax + d.employeeNI + d.divTax;
+  }, 0);
   var netMonthly       = totalNetTakeHome / 12;
   var effRate          = annualGross > 0 ? totalTaxPaid / annualGross * 100 : 0;
 
@@ -2477,6 +2501,13 @@ function renderLtdOutput() {
   if (container) {
     container.innerHTML = r.directors.map(function(d, i) {
       var header = numDirs === 1 ? 'Director' : (escHtml(d.name) + ' \xb7 ' + escHtml(d.shareholding) + '%');
+      // One line per dividend band, straight from the calculation (see dividendBandsOn)
+      var divBreakdown = d.divBands.filter(function(b) { return Math.round(b.amount) > 0; }).map(function(b) {
+        var pct = +(b.rate * 100).toFixed(2) + '%';
+        var lbl = '\xa3' + Math.round(b.amount).toLocaleString('en-GB') + ' at ' + pct + (b.note ? ' (' + b.note + ')' : '');
+        var tax = (b.rate > 0 ? '-' : '') + '\xa3' + Math.round(b.tax).toLocaleString('en-GB');
+        return '<div class="exp-breakdown-row"><span>' + lbl + '</span><span>' + tax + '</span></div>';
+      }).join('');
       var warning = d.employedElsewhere === 'yes'
         ? '<div class="emp-warning" style="margin-top:12px"><p>⚠️ Employed elsewhere — figures may vary</p></div>'
         : '';
@@ -2492,6 +2523,7 @@ function renderLtdOutput() {
           '<span class="out-row-val pos" id="o-dir-' + i + '-divs-received">\xa30</span></div>' +
         '<div class="out-row"><span class="out-row-lbl">Dividend Tax</span>' +
           '<span class="out-row-val neg" id="o-dir-' + i + '-div-tax">-\xa30</span></div>' +
+        '<div class="exp-breakdown">' + divBreakdown + '</div>' +
         (d.studentLoanRepayment > 0
           ? '<div class="out-row"><span class="out-row-lbl">Student Loan Repayment</span>' +
             '<span class="out-row-val neg" id="o-dir-' + i + '-student-loan">-\xa30</span></div>'

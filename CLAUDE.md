@@ -228,7 +228,8 @@ Card order (top to bottom):
 - **Hero card** — Net Annual Take-Home (count-up animation; combined total for 2+ directors)
 - **Net Monthly Take-Home card** (`#o-ltd-monthly-card`) — always visible (both 1 and 2+ directors); shows `totalNetTakeHome / 12`; first card in `.out-cards`, mirroring the Inside IR35 output layout
 - **Company card** — Gross Revenue, VAT Flat Rate Surplus (hidden when zero; positive/emerald; id `o-ltd-vat-frs-row`), Expenses (with indented per-category breakdown beneath for non-zero categories, populated by `renderLtdOutput()` into `#o-ltd-expenses-breakdown`; breakdown text uses `rgba(13,27,42,.45)` — dark, not white), Total Salaries, Total Pensions (hidden if none), Employer NI (hidden if zero — always zero for 2+ directors at £12,570 salary due to employment allowance), Corporation Tax, Dividends Available
-- **Director cards** — one per director, generated dynamically into `#director-cards-container` (which has `display:flex;flex-direction:column;gap:10px` to space cards correctly). Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax, Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
+- **Director cards** — one per director, generated dynamically into `#director-cards-container` (which has `display:flex;flex-direction:column;gap:10px` to space cards correctly). Each shows: Gross Salary / Net Salary (two-column), Dividends Received, Dividend Tax (with an indented per-band breakdown beneath — see below), Director Net Take-Home. Header shows "Director" for 1 director; "Name · X%" for 2+.
+  - **Dividend Tax breakdown** (added 2026-10-05): one indented line per band under the Dividend Tax row, e.g. "£500 at 0% (dividend allowance) → £0", "£37,200 at 10.75% → -£3,999", "£37,929 at 35.75% → -£13,560". Uses the same `.exp-breakdown` / `.exp-breakdown-row` styling as the expenses breakdown. Bands with nothing in them are hidden. A "(personal allowance)" 0% line appears when salary is below the personal allowance. The amounts always add up to Dividends Received and the tax column adds up to the Dividend Tax row. The lines are built in `renderLtdOutput()` from each director's `divBands` array, which comes from `dividendBandsOn()` — never type a rate or band amount into the render code.
 - **Combined Total card** (`#o-combined-card`) — visible for 2+ directors only; shows Total Net Take-Home, Total Tax Paid, Combined Effective Rate
 - **Effective Tax Rate** card — visible for 1 director only
 - Disclaimer
@@ -250,7 +251,13 @@ Card order (top to bottom):
   The £500 dividend allowance is applied band-by-band from the bottom up. It is taxed at 0%
   but still consumes band, which is why it is subtracted from each band's taxable amount
   rather than shifting the higher bands down.
-- **Effective rate** = `totalTaxPaid / annualGross × 100` where `totalTaxPaid = annualGross − totalNetTakeHome`.
+- **Total Tax Paid** = `corporationTax + netEmployerNI + Σ per director (incomeTax + employeeNI + divTax)`.
+  Actual taxes only — company expenses, pension contributions and student loan repayments are
+  **not** included. (Corrected 2026-10-05: it was previously `annualGross − totalNetTakeHome`,
+  which counted expenses, pensions and student loan as tax.)
+- **Effective rate** = `totalTaxPaid / annualGross × 100`. Used by both "Combined Effective Rate"
+  (2+ directors) and the "Effective Tax Rate" card (1 director). Note this is the share lost to
+  tax, whereas the Inside IR35 "Effective Tax Rate" card shows the share kept.
 
 ## Tax rates live in ONE place — the `RATES` object
 
@@ -270,7 +277,8 @@ All four calculators call these instead of doing their own tax maths:
 | `taperedPA(income)` | Personal allowance after the £100k taper (£1 per whole £2) |
 | `incomeTaxOn(taxable, pa)` | Income tax on salary — fixed £37,700 basic band, 45% from £125,140 total income |
 | `employeeNIOn(gross)` | Employee Class 1 NI (fixed thresholds — does not move with the PA) |
-| `dividendTaxOn(salary, divs, pa)` | Dividend tax with band edges `pa + 37700` and `125140`, £500 allowance consumed bottom-up |
+| `dividendBandsOn(salary, divs, pa)` | The only place dividend tax is worked out. Returns one row per slice — personal allowance, dividend allowance, basic, higher, additional — each `{ note, amount, rate, tax }`. Band edges `pa + 37700` and `125140`, £500 allowance consumed bottom-up. Zero rows are kept; the output screen filters them |
+| `dividendTaxOn(salary, divs, pa)` | Total dividend tax — just sums the `tax` column of `dividendBandsOn()` |
 | `corporationTaxOn(profit)` | Corporation tax with marginal relief |
 | `calcStudentLoan(plan, income)` | Student loan repayment via `STUDENT_LOAN_PLANS` |
 

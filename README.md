@@ -115,7 +115,7 @@ The **Effective Rate** shown on the output screen is `net annual ÷ gross contra
 | 16 | Monthly company expenses — 9 categorised inputs; live total bar fixed at the bottom |
 | 17 | Company pension yes/no — single director only |
 | 18 | Monthly pension amount — single director only (conditional) |
-| 19 | Output — Company card (with VAT FRS surplus, expense breakdown) + per-director cards + combined total |
+| 19 | Output — Company card (with VAT FRS surplus, expense breakdown) + per-director cards (with dividend tax broken down by band and rate) + combined total. "Total Tax Paid" is actual tax only: corporation tax, employer NI, income tax, employee NI and dividend tax — not expenses, pensions or student loan |
 | 20–28 | Director detail loop (2+ directors) — name, shareholding %, salary, employed elsewhere, pension, student loan |
 | 29 | Comparison — side-by-side IR35 vs Ltd Co cards |
 
